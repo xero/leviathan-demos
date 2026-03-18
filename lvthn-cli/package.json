@@ -1,0 +1,14 @@
+{
+  "name": "lvthn-cli",
+  "version": "2.0.0",
+  "description": "Serpent-256 file encryption CLI v2 — leviathan demo",
+  "type": "module",
+  "scripts": {
+    "dev": "bun run src/main.ts",
+    "build": "bun run build.ts",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "leviathan-crypto": "^1.0.0"
+  }
+}

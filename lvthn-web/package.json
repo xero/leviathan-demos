@@ -1,0 +1,24 @@
+{
+  "name": "leviathan-web",
+  "version": "2.0.0",
+  "author": "xero (x@xero.style)",
+  "license": "MIT",
+  "description": "Leviathan crypto library web demo",
+  "scripts": {
+    "build":     "bun run build.ts",
+    "lint":      "npx eslint .",
+    "testsetup": "bunx playwright install chromium",
+    "test":      "bunx playwright test"
+  },
+  "dependencies": {
+    "leviathan-crypto": "^1.0.0",
+    "argon2id": "latest"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "@types/bun": "latest",
+    "@eslint/js": "latest",
+    "eslint": "latest",
+    "typescript-eslint": "latest"
+  }
+}

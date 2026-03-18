@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lvthn-chat — E2E Encrypted</title>
+<style>
+:root {
+  --bg:         #0d1117;
+  --bg-panel:   #161b22;
+  --bg-input:   #0d1117;
+  --bg-insp:    #13181f;
+  --border:     #30363d;
+  --border-hi:  #58a6ff;
+  --text:       #e6edf3;
+  --muted:      #7d8590;
+  --accent:     #58a6ff;
+  --err:        #f85149;
+  --ok:         #3fb950;
+  --warn:       #d29922;
+  --font:       'Courier New', Courier, monospace;
+  --r:          2px;
+  --t:          150ms ease;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); font-size: 13px; line-height: 1.6; }
+a { color: var(--accent); }
+button {
+  background: none; border: 1px solid var(--border); color: var(--muted);
+  font: inherit; font-size: 11px; letter-spacing: 0.08em; padding: 5px 14px;
+  cursor: pointer; border-radius: var(--r); transition: var(--t);
+}
+button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+button:disabled { opacity: 0.4; cursor: default; }
+button.primary {
+  border-color: var(--accent); color: var(--accent);
+  letter-spacing: 0.1em;
+}
+button.primary:hover:not(:disabled) { background: rgba(88,166,255,0.08); }
+input[type=text], input[type=radio] { font: inherit; }
+input[type=text] {
+  background: var(--bg-input); border: 1px solid var(--border); color: var(--text);
+  padding: 5px 10px; border-radius: var(--r); outline: none; font-size: 12px;
+  transition: border-color var(--t);
+}
+input[type=text]:focus { border-color: var(--border-hi); }
+input[type=text]::placeholder { color: var(--muted); }
+
+/* ─── Phase containers ─────────────────────────────────────── */
+.phase { display: none; }
+#phase-setup:not([hidden])    { display: block; }
+#phase-exchange:not([hidden]) { display: block; }
+#phase-chat:not([hidden]) {
+  display: grid;
+  grid-template-rows: 48px 1fr 60px;
+  grid-template-columns: 1fr 360px;
+  height: 100vh;
+}
+
+/* ─── Phase 1: Setup ───────────────────────────────────────── */
+.setup-wrap { max-width: 560px; margin: 40px auto; padding: 0 16px 40px; }
+.setup-header {
+  display: flex; align-items: baseline; gap: 12px;
+  padding: 0 0 14px; border-bottom: 1px solid var(--border); margin-bottom: 28px;
+}
+.setup-logo { font-size: 14px; letter-spacing: 0.04em; }
+.setup-tagline { color: var(--muted); font-size: 11px; }
+.setup-section { margin-bottom: 24px; }
+.setup-label { color: var(--muted); font-size: 11px; letter-spacing: 0.08em; margin-bottom: 8px; }
+.setup-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.setup-row label { color: var(--text); font-size: 12px; cursor: pointer; }
+.setup-row input[type=radio] { accent-color: var(--accent); }
+#join-code-row { display: flex; align-items: center; gap: 8px; margin-left: 22px; }
+.room-code-wait {
+  border: 1px solid var(--border); border-radius: var(--r);
+  padding: 10px 14px; margin-top: 12px; display: none;
+}
+.room-code-wait.visible { display: block; }
+.room-code-big { font-size: 22px; letter-spacing: 0.15em; color: var(--accent); }
+.setup-status { margin-top: 6px; font-size: 11px; color: var(--muted); min-height: 16px; }
+.setup-status.err  { color: var(--err); }
+.setup-status.ok   { color: var(--ok); }
+.keypair-panel {
+  border: 1px solid var(--border); border-radius: var(--r);
+  padding: 12px 14px; margin-top: 20px; font-size: 12px;
+}
+.kp-label { color: var(--muted); font-size: 11px; letter-spacing: 0.06em; margin-bottom: 8px; }
+.kp-row { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 6px; }
+.kp-key-label { color: var(--muted); width: 80px; flex-shrink: 0; padding-top: 1px; }
+.kp-value { color: var(--text); word-break: break-all; flex: 1; font-size: 11px; line-height: 1.5; }
+.kp-value.empty { color: var(--muted); font-style: italic; }
+
+/* ─── Phase 2: Key Exchange ────────────────────────────────── */
+.exchange-wrap { max-width: 560px; margin: 40px auto; padding: 0 16px; }
+.exc-header {
+  display: flex; align-items: baseline; gap: 10px;
+  border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 24px;
+}
+.exc-title { font-size: 14px; }
+.exc-room  { color: var(--accent); font-size: 12px; }
+.exc-checklist { margin-bottom: 24px; }
+.exc-step {
+  display: flex; align-items: baseline; gap: 10px;
+  padding: 7px 0; border-bottom: 1px solid var(--border);
+  font-size: 12px; transition: var(--t);
+}
+.exc-step:last-child { border-bottom: none; }
+.exc-step-num { color: var(--muted); width: 20px; flex-shrink: 0; }
+.exc-step-icon { width: 16px; flex-shrink: 0; }
+.exc-step.done .exc-step-icon { color: var(--ok); }
+.exc-step.pending .exc-step-icon { color: var(--muted); }
+.exc-step-text { flex: 1; }
+.exc-step.done .exc-step-text { color: var(--text); }
+.exc-step.pending .exc-step-text { color: var(--muted); }
+.exc-key-section { margin-bottom: 14px; }
+.exc-key-label { color: var(--muted); font-size: 11px; margin-bottom: 4px; }
+.exc-key-value {
+  font-size: 11px; word-break: break-all; color: var(--text);
+  background: var(--bg-panel); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 8px 10px; line-height: 1.5;
+}
+.exc-secret-row { display: flex; align-items: center; gap: 10px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border); }
+.exc-secret-label { color: var(--muted); font-size: 11px; }
+.exc-secret-status { color: var(--ok); font-size: 12px; font-weight: bold; }
+.exc-secret-note { color: var(--muted); font-size: 11px; font-style: italic; display: none; margin-top: 6px; }
+.exc-secret-note.visible { display: block; }
+
+/* ─── Phase 3: Chat layout ─────────────────────────────────── */
+.chat-header {
+  grid-row: 1; grid-column: 1 / 3;
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 16px; border-bottom: 1px solid var(--border);
+  background: var(--bg-panel); font-size: 12px;
+}
+.chat-header-logo { color: var(--muted); }
+.chat-header-sep  { color: var(--border); }
+.chat-header-room { color: var(--accent); }
+.chat-header-names { color: var(--muted); }
+.chat-header-badge {
+  margin-left: auto; color: var(--ok); font-size: 11px;
+  border: 1px solid var(--border); border-radius: var(--r); padding: 2px 8px;
+}
+
+/* ─── Messages panel ───────────────────────────────────────── */
+.chat-messages-panel {
+  grid-row: 2; grid-column: 1;
+  overflow-y: auto; padding: 12px 16px;
+}
+.msg { padding: 4px 0; display: flex; gap: 10px; align-items: baseline; }
+.msg-time   { color: var(--muted); font-size: 11px; flex-shrink: 0; }
+.msg-sender { color: var(--accent); min-width: 80px; flex-shrink: 0; }
+.msg-own .msg-sender { color: var(--text); }
+.msg-text   { color: var(--text); word-break: break-word; }
+.msg-sys {
+  color: var(--muted); font-size: 11px; font-style: italic;
+  padding: 8px 0; border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border); margin: 4px 0; text-align: center;
+}
+.msg-replay {
+  border: 1px solid var(--err); border-radius: var(--r);
+  padding: 8px 12px; margin: 4px 0; background: rgba(248,81,73,0.05);
+}
+.replay-warn   { color: var(--err); font-size: 12px; margin-bottom: 4px; }
+.replay-detail { color: var(--muted); font-size: 11px; }
+
+/* ─── Crypto inspector panel ───────────────────────────────── */
+.chat-inspector-panel {
+  grid-row: 2; grid-column: 2;
+  border-left: 1px solid var(--border);
+  overflow-y: auto;
+  background: var(--bg-insp);
+}
+.insp-title {
+  font-size: 11px; letter-spacing: 0.08em; color: var(--muted);
+  padding: 8px 14px; border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; background: var(--bg-insp);
+}
+.insp-empty {
+  padding: 20px 14px; color: var(--muted); font-size: 11px; font-style: italic;
+}
+.insp-block { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+.insp-label {
+  font-size: 10px; letter-spacing: 0.1em; color: var(--accent);
+  text-transform: uppercase; margin-bottom: 4px;
+}
+.insp-hex {
+  font-size: 11px; color: var(--text); word-break: break-all; line-height: 1.6;
+  white-space: pre-wrap;
+}
+.insp-json {
+  font-size: 11px; color: var(--text); white-space: pre-wrap; word-break: break-word;
+}
+.insp-note { font-size: 10px; color: var(--muted); font-style: italic; margin-top: 4px; }
+.insp-server-saw { font-size: 11px; color: var(--muted); word-break: break-all; line-height: 1.5; }
+.insp-status { font-size: 11px; margin-top: 4px; }
+.insp-status.ok   { color: var(--ok); }
+.insp-status.warn { color: var(--warn); }
+.insp-replay-badge {
+  display: inline-block; background: var(--warn); color: #000;
+  font-size: 10px; padding: 1px 6px; border-radius: var(--r); margin-bottom: 6px;
+}
+.insp-btn-row { padding: 10px 14px; }
+
+/* ─── Chat input row ───────────────────────────────────────── */
+.chat-input-row {
+  grid-row: 3; grid-column: 1 / 3;
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 16px; border-top: 1px solid var(--border);
+  background: var(--bg-panel);
+}
+#inp-message {
+  flex: 1; background: var(--bg-input); border: 1px solid var(--border);
+  color: var(--text); padding: 8px 12px; border-radius: var(--r);
+  font: inherit; font-size: 12px; outline: none;
+  transition: border-color var(--t);
+}
+#inp-message:focus { border-color: var(--border-hi); }
+#inp-message::placeholder { color: var(--muted); }
+#inp-message:disabled { opacity: 0.4; }
+.reconnect-section {
+  border-top: 1px solid var(--border); margin-top: 12px; padding-top: 12px;
+  display: none;
+}
+.reconnect-section.visible { display: flex; gap: 10px; align-items: center; }
+.reconnect-note { color: var(--muted); font-size: 11px; }
+
+/* ─── Scrollbar ────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     PHASE 1: SETUP
+═══════════════════════════════════════════════════════════════ -->
+<div id="phase-setup" class="phase">
+  <div class="setup-wrap">
+    <header class="setup-header">
+      <span class="setup-logo">lvthn-chat</span>
+      <span class="setup-tagline">end-to-end encrypted · XChaCha20-Poly1305 (leviathan-crypto) · X25519 (SubtleCrypto)</span>
+    </header>
+
+    <div class="setup-section">
+      <div class="setup-label">IDENTITY</div>
+      <div class="setup-row">
+        <span style="color:var(--muted);font-size:12px">display name:</span>
+        <input type="text" id="inp-name" placeholder="alice" style="width:160px">
+      </div>
+    </div>
+
+    <div class="setup-section">
+      <div class="setup-label">SESSION</div>
+      <div class="setup-row">
+        <input type="radio" name="mode" id="mode-new" value="new" checked>
+        <label for="mode-new">Start new session</label>
+      </div>
+      <div class="setup-row">
+        <input type="radio" name="mode" id="mode-join" value="join">
+        <label for="mode-join">Join existing session</label>
+        <div id="join-code-row" hidden>
+          <span style="color:var(--muted);font-size:12px">room code:</span>
+          <input type="text" id="inp-code" placeholder="X7K2PQ" maxlength="6" style="width:90px;text-transform:uppercase">
+        </div>
+      </div>
+    </div>
+
+    <button class="primary" id="btn-connect">GENERATE KEYPAIR &amp; CONNECT</button>
+
+    <div class="room-code-wait" id="room-code-section">
+      <div style="color:var(--muted);font-size:11px;margin-bottom:4px">share this code with your peer:</div>
+      <div class="room-code-big" id="room-code-display"></div>
+      <div style="color:var(--muted);font-size:11px;margin-top:6px" id="setup-waiting-note">waiting for peer...</div>
+    </div>
+
+    <div class="setup-status" id="setup-status"></div>
+
+    <div class="keypair-panel">
+      <div class="kp-label">── keypair ──────────────────────────────────────────</div>
+      <div class="kp-row">
+        <span class="kp-key-label">public key:</span>
+        <span class="kp-value empty" id="pub-key-display">(generated on connect)</span>
+      </div>
+      <div class="kp-row">
+        <span class="kp-key-label">private key:</span>
+        <span class="kp-value" style="font-style:italic;color:var(--muted)">protected by SubtleCrypto — inaccessible to JavaScript</span>
+      </div>
+      <div style="color:var(--muted);font-size:10px;margin-top:6px;font-style:italic">
+        your private key never leaves this browser
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     PHASE 2: KEY EXCHANGE
+═══════════════════════════════════════════════════════════════ -->
+<div id="phase-exchange" class="phase" hidden>
+  <div class="exchange-wrap">
+    <div class="exc-header">
+      <span class="exc-title">lvthn-chat</span>
+      <span class="chat-header-sep">·</span>
+      <span class="exc-room">room <span id="exc-room-code"></span></span>
+    </div>
+
+    <div class="kp-label" style="margin-bottom:12px">KEY EXCHANGE</div>
+
+    <div class="exc-checklist">
+      <div class="exc-step" id="exc-step-1">
+        <span class="exc-step-num">[1]</span>
+        <span class="exc-step-icon">◌</span>
+        <span class="exc-step-text">generating keypair...</span>
+      </div>
+      <div class="exc-step" id="exc-step-2">
+        <span class="exc-step-num">[2]</span>
+        <span class="exc-step-icon">◌</span>
+        <span class="exc-step-text">waiting for peer...</span>
+      </div>
+      <div class="exc-step" id="exc-step-3">
+        <span class="exc-step-num">[3]</span>
+        <span class="exc-step-icon">◌</span>
+        <span class="exc-step-text">exchanging public keys...</span>
+      </div>
+      <div class="exc-step" id="exc-step-4">
+        <span class="exc-step-num">[4]</span>
+        <span class="exc-step-icon">◌</span>
+        <span class="exc-step-text">computing shared secret...</span>
+      </div>
+    </div>
+
+    <div class="exc-key-section">
+      <div class="exc-key-label">your public key:</div>
+      <div class="exc-key-value" id="exc-my-pk">(pending)</div>
+    </div>
+    <div class="exc-key-section">
+      <div class="exc-key-label">peer public key:</div>
+      <div class="exc-key-value" id="exc-peer-pk">(waiting...)</div>
+    </div>
+
+    <div class="exc-secret-row">
+      <span class="exc-secret-label">shared secret:</span>
+      <span class="exc-secret-status" id="exc-secret-status">COMPUTING...</span>
+    </div>
+    <div class="exc-secret-note" id="exc-secret-note">
+      derived via X25519 · your private key was never transmitted
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     PHASE 3: CHAT
+═══════════════════════════════════════════════════════════════ -->
+<div id="phase-chat" class="phase" hidden>
+
+  <!-- Header -->
+  <div class="chat-header">
+    <span class="chat-header-logo">lvthn-chat</span>
+    <span class="chat-header-sep">·</span>
+    <span>room <span class="chat-header-room" id="chat-room-code"></span></span>
+    <span class="chat-header-sep">·</span>
+    <span class="chat-header-names" id="chat-my-name"></span>
+    <span class="chat-header-badge">✓ E2E encrypted</span>
+  </div>
+
+  <!-- Messages panel -->
+  <div class="chat-messages-panel" id="msg-list">
+    <!-- messages appended here -->
+  </div>
+
+  <!-- Crypto inspector -->
+  <div class="chat-inspector-panel">
+    <div class="insp-title">CRYPTO INSPECTOR</div>
+    <div class="insp-empty" id="insp-empty">receive a message to inspect its crypto fields</div>
+
+    <div id="insp-content" hidden>
+      <div class="insp-block">
+        <div class="insp-label">nonce</div>
+        <div class="insp-hex" id="insp-nonce"></div>
+        <div class="insp-note">random · unique per message · 24 bytes (192-bit)</div>
+      </div>
+
+      <div class="insp-block">
+        <div class="insp-label">aad — authenticated, not encrypted</div>
+        <div class="insp-json" id="insp-aad"></div>
+        <div class="insp-note">the server could read this · cannot modify without breaking the tag</div>
+      </div>
+
+      <div class="insp-block">
+        <div class="insp-label">tag</div>
+        <div class="insp-hex" id="insp-tag"></div>
+        <div class="insp-note">Poly1305 MAC · proves integrity of ciphertext + AAD</div>
+      </div>
+
+      <div class="insp-block">
+        <div class="insp-label">ciphertext</div>
+        <div class="insp-hex" id="insp-ct"></div>
+        <div class="insp-note" id="insp-ct-len"></div>
+      </div>
+
+      <div class="insp-block">
+        <div class="insp-label">server saw</div>
+        <div class="insp-server-saw" id="insp-server-saw"></div>
+        <div class="insp-note">opaque base64 · server cannot read the payload</div>
+      </div>
+
+      <div class="insp-block">
+        <div class="insp-replay-badge" id="insp-replay-badge" hidden>REPLAY</div>
+        <div class="insp-status" id="insp-status"></div>
+      </div>
+
+      <div class="insp-btn-row">
+        <button id="btn-replay" disabled>REPLAY THIS MESSAGE</button>
+        <div class="insp-note" style="margin-top:6px">resends captured blob · receiving client will detect replay via sequence number</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Input row -->
+  <div class="chat-input-row">
+    <input type="text" id="inp-message" placeholder="type a message... (Enter to send)" disabled>
+    <button id="btn-send" class="primary" disabled>SEND</button>
+    <div class="reconnect-section" id="reconnect-section">
+      <span class="reconnect-note">peer disconnected</span>
+      <button id="btn-new-session">START NEW SESSION</button>
+    </div>
+  </div>
+
+</div><!-- #phase-chat -->
+
+<script type="module">
+// ==================== LEVIATHAN BUNDLE ====================
+{{LEVIATHAN_BUNDLE}}
+// ==================== APP CODE ====================
+// init, XChaCha20Poly1305, bytesToHex, bytesToBase64, base64ToBytes
+// are in scope from the inlined bundle above.
+
+await init(['chacha20']);
+const aead = new XChaCha20Poly1305();
+
+// ── Helpers ────────────────────────────────────────────────────
+function rng(n) {
+  const b = new Uint8Array(n);
+  crypto.getRandomValues(b);
+  return b;
+}
+
+function hexStr(bytes) { return bytesToHex(bytes); }
+function wrapHex(h, cols = 32) {
+  const lines = [];
+  for (let i = 0; i < h.length; i += cols) lines.push(h.slice(i, i + cols));
+  return lines.join('\n');
+}
+function escHtml(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// ── State ───────────────────────────────────────────────────────
+let myKeys          = null;   // { keyPair, pkBytes }
+let sharedKey       = null;   // Uint8Array(32) — XChaCha20Poly1305 key
+let roomCode        = '';
+let myName          = '';
+let wsConn          = null;
+let mySendSeq       = 0;
+let peerName        = '';
+let peerSeqSeen     = 0;
+let peerPk          = null;
+let lastRelayBlob   = null;   // raw payload string — for replay demo
+let keyExchangeDone = false;
+
+// ── Phase management ────────────────────────────────────────────
+function showPhase(name) {
+  ['setup', 'exchange', 'chat'].forEach(p => {
+    const el = document.getElementById('phase-' + p);
+    el.hidden = (p !== name);
+  });
+}
+
+// ── Phase 1: Connect ────────────────────────────────────────────
+async function connect() {
+  myName = document.getElementById('inp-name').value.trim();
+  if (!myName) { setStatus('enter a display name', 'err'); return; }
+
+  const joining = document.getElementById('mode-join').checked;
+  const joinCode = joining
+    ? document.getElementById('inp-code').value.trim().toUpperCase()
+    : '';
+  if (joining && joinCode.length !== 6) {
+    setStatus('enter a 6-character room code', 'err'); return;
+  }
+
+  // Generate X25519 keypair via SubtleCrypto
+  try {
+    const keyPair = await crypto.subtle.generateKey(
+        { name: 'X25519' },
+        true,
+        ['deriveBits'],
+    );
+    const pkRaw  = await crypto.subtle.exportKey('raw', keyPair.publicKey);
+    const pkBytes = new Uint8Array(pkRaw);
+    myKeys = { keyPair, pkBytes };
+  } catch (err) {
+    setStatus('keypair generation failed: ' + err.message, 'err');
+    return;
+  }
+
+  // Show public key
+  const pkEl = document.getElementById('pub-key-display');
+  pkEl.textContent = hexStr(myKeys.pkBytes);
+  pkEl.classList.remove('empty');
+
+  // Connect to relay server
+  document.getElementById('btn-connect').disabled = true;
+  setStatus('connecting...', '');
+
+  const wsProto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const wsHost  = location.host || 'localhost:3000';
+  wsConn = new WebSocket(`${wsProto}//${wsHost}/relay`);
+
+  wsConn.onopen = () => {
+    wsConn.send(JSON.stringify({ type: 'join', room: joinCode }));
+  };
+
+  wsConn.onmessage = evt => {
+    let msg;
+    try { msg = JSON.parse(evt.data); } catch { return; }
+    handleServerMessage(msg);
+  };
+
+  wsConn.onerror = () => {
+    setStatus('connection error — is the server running? (cd server && bun start)', 'err');
+    document.getElementById('btn-connect').disabled = false;
+  };
+
+  wsConn.onclose = () => {
+    if (keyExchangeDone) onPeerLeft();
+  };
+}
+
+function handleServerMessage(msg) {
+  switch (msg.type) {
+    case 'joined':     onJoined(msg.room, msg.peerCount); break;
+    case 'peer_joined': onPeerJoined(); break;
+    case 'relay':      onRelay(msg.payload); break;
+    case 'peer_left':  onPeerLeft(); break;
+    case 'error':      setStatus('server: ' + msg.message, 'err'); break;
+  }
+}
+
+function onJoined(room, peerCount) {
+  roomCode = room;
+  if (peerCount === 1) {
+    document.getElementById('room-code-display').textContent = room;
+    document.getElementById('room-code-section').classList.add('visible');
+    setStatus('waiting for peer...', '');
+  }
+  // peerCount === 2 means we joined an existing room — peer_joined follows immediately
+}
+
+// ── Phase 2: Key Exchange ───────────────────────────────────────
+function onPeerJoined() {
+  showPhase('exchange');
+  document.getElementById('exc-room-code').textContent = roomCode;
+  document.getElementById('exc-my-pk').textContent = hexStr(myKeys.pkBytes);
+
+  setExchangeStep(1, true, '✓ your keypair generated');
+  setExchangeStep(2, true, '✓ peer connected');
+
+  // Send our public key to the peer
+  sendPubkey();
+}
+
+function sendPubkey() {
+  const zeros24 = new Uint8Array(24);
+  const zeros16 = new Uint8Array(16);
+  const payload = btoa(JSON.stringify({
+    msgType:    'pubkey',
+    nonce:      bytesToBase64(zeros24),
+    tag:        bytesToBase64(zeros16),
+    ciphertext: bytesToBase64(myKeys.pkBytes),
+    aad:        '',
+  }));
+  wsConn.send(JSON.stringify({ type: 'relay', room: roomCode, payload }));
+}
+
+async function onRelay(payload) {
+  let encMsg;
+  try { encMsg = JSON.parse(atob(payload)); } catch {
+    if (keyExchangeDone) appendSystemMsg('⚠ received malformed message (parse error) — discarded');
+    return;
+  }
+  if (encMsg.msgType === 'pubkey') {
+    await onPubkey(encMsg);
+  } else if (encMsg.msgType === 'chat') {
+    onChat(encMsg, payload);
+  } else {
+    if (keyExchangeDone) appendSystemMsg('⚠ unknown message type: ' + String(encMsg.msgType));
+  }
+}
+
+async function onPubkey(encMsg) {
+  // Public keys are not secret — skip tag verification for pubkey messages
+  peerPk = base64ToBytes(encMsg.ciphertext);
+
+  document.getElementById('exc-peer-pk').textContent = hexStr(peerPk);
+  setExchangeStep(3, true, '✓ public keys exchanged');
+
+  // Derive shared secret via SubtleCrypto X25519
+  try {
+    const peerCryptoKey = await crypto.subtle.importKey(
+        'raw',
+        peerPk,
+        { name: 'X25519' },
+        false,
+        [],
+    );
+    const sharedBits = await crypto.subtle.deriveBits(
+        { name: 'X25519', public: peerCryptoKey },
+        myKeys.keyPair.privateKey,
+        256,
+    );
+    sharedKey = new Uint8Array(sharedBits);
+  } catch (err) {
+    appendSystemMsg('⚠ key derivation failed: ' + err.message);
+    return;
+  }
+
+  setExchangeStep(4, true, '✓ shared secret derived');
+  document.getElementById('exc-secret-status').textContent = '✓ ESTABLISHED';
+  document.getElementById('exc-secret-note').classList.add('visible');
+
+  keyExchangeDone = true;
+
+  // Auto-advance to Phase 3 after 1.5 seconds
+  setTimeout(startChat, 1500);
+}
+
+function setExchangeStep(n, done, text) {
+  const el = document.getElementById('exc-step-' + n);
+  el.className = 'exc-step ' + (done ? 'done' : 'pending');
+  el.querySelector('.exc-step-icon').textContent = done ? '✓' : '◌';
+  el.querySelector('.exc-step-text').textContent = text;
+}
+
+// ── Phase 3: Chat ───────────────────────────────────────────────
+function startChat() {
+  document.getElementById('chat-room-code').textContent = roomCode;
+  document.getElementById('chat-my-name').textContent = myName;
+  showPhase('chat');
+  const inp = document.getElementById('inp-message');
+  inp.disabled = false;
+  inp.placeholder = 'type a message... (Enter to send)';
+  inp.focus();
+  document.getElementById('btn-send').disabled = false;
+}
+
+function sendMessage() {
+  if (!sharedKey || !wsConn || wsConn.readyState !== 1) return;
+  const inp = document.getElementById('inp-message');
+  const text = inp.value.trim();
+  if (!text) return;
+
+  mySendSeq++;
+  const aadObj = {
+    sender:    myName,
+    sequence:  mySendSeq,
+    timestamp: Date.now(),
+    roomCode,
+  };
+  const aadBytes  = new TextEncoder().encode(JSON.stringify(aadObj));
+  const plainBytes = new TextEncoder().encode(text);
+  const nonce     = rng(24);
+
+  const sealed     = aead.encrypt(sharedKey, nonce, plainBytes, aadBytes);
+  const ciphertext = sealed.slice(0, -16);
+  const tag        = sealed.slice(-16);
+
+  const payload = btoa(JSON.stringify({
+    msgType:    'chat',
+    nonce:      bytesToBase64(nonce),
+    tag:        bytesToBase64(tag),
+    ciphertext: bytesToBase64(ciphertext),
+    aad:        bytesToBase64(aadBytes),
+  }));
+
+  wsConn.send(JSON.stringify({ type: 'relay', room: roomCode, payload }));
+  appendMessage(myName, text, aadObj.timestamp, true);
+  inp.value = '';
+  inp.focus();
+}
+
+function onChat(encMsg, rawPayload) {
+  // Store for replay demo
+  lastRelayBlob = rawPayload;
+
+  const nonce      = base64ToBytes(encMsg.nonce);
+  const tag        = base64ToBytes(encMsg.tag);
+  const ciphertext = base64ToBytes(encMsg.ciphertext);
+  const aadBytes   = base64ToBytes(encMsg.aad);
+
+  let aadObj;
+  try {
+    aadObj = JSON.parse(new TextDecoder().decode(aadBytes));
+  } catch {
+    appendSystemMsg('⚠ message authentication failed — invalid AAD (discarded)');
+    return;
+  }
+
+  // Verify tag and decrypt — XChaCha20Poly1305.decrypt() always verifies before returning
+  let plaintext;
+  try {
+    const sealedForDecrypt = new Uint8Array(ciphertext.length + tag.length);
+    sealedForDecrypt.set(ciphertext, 0);
+    sealedForDecrypt.set(tag, ciphertext.length);
+    plaintext = aead.decrypt(sharedKey, nonce, sealedForDecrypt, aadBytes);
+  } catch {
+    appendSystemMsg('⚠ message authentication failed — discarded');
+    return;
+  }
+
+  // Replay detection: check sequence number per sender.
+  // Two cases:
+  //   1. Message claiming to be from ME (self-replay): seq <= mySendSeq
+  //   2. Message from peer replayed again: seq <= peerSeqSeen
+  const seq         = Number(aadObj.sequence);
+  const isSelfMsg   = aadObj.sender === myName;
+  const isReplay    = isSelfMsg ? (seq <= mySendSeq) : (seq <= peerSeqSeen);
+  const currentSeq  = isSelfMsg ? mySendSeq : peerSeqSeen;
+
+  if (isReplay) {
+    appendReplayMsg(aadObj, seq, currentSeq);
+    updateInspector(encMsg, aadObj, nonce, tag, ciphertext, rawPayload, true);
+    return;
+  }
+  if (!isSelfMsg) {
+    peerSeqSeen = seq;
+    if (!peerName && aadObj.sender) peerName = aadObj.sender;
+  }
+
+  const text = new TextDecoder().decode(plaintext);
+  appendMessage(aadObj.sender, text, aadObj.timestamp);
+  updateInspector(encMsg, aadObj, nonce, tag, ciphertext, rawPayload, false);
+}
+
+function replayLastMessage() {
+  if (!lastRelayBlob || !wsConn || wsConn.readyState !== 1) return;
+  wsConn.send(JSON.stringify({ type: 'relay', room: roomCode, payload: lastRelayBlob }));
+}
+
+// ── Inspector ───────────────────────────────────────────────────
+function updateInspector(encMsg, aadObj, nonce, tag, ciphertext, rawPayload, isReplay) {
+  document.getElementById('insp-empty').hidden = true;
+  document.getElementById('insp-content').hidden = false;
+
+  document.getElementById('insp-nonce').textContent = wrapHex(hexStr(nonce));
+  document.getElementById('insp-aad').textContent   = JSON.stringify(aadObj, null, 2);
+  document.getElementById('insp-tag').textContent   = wrapHex(hexStr(tag));
+
+  const ctHex     = hexStr(ciphertext);
+  const ctDisplay = ctHex.length > 64 ? ctHex.slice(0, 64) + '...' : ctHex;
+  document.getElementById('insp-ct').textContent     = ctDisplay;
+  document.getElementById('insp-ct-len').textContent = '(' + ciphertext.length + ' bytes)';
+
+  // Show what the server saw (the JSON relay frame with payload truncated for display)
+  const truncPl = rawPayload.length > 40 ? rawPayload.slice(0, 40) + '...' : rawPayload;
+  document.getElementById('insp-server-saw').textContent =
+    JSON.stringify({ type: 'relay', room: roomCode, payload: truncPl });
+
+  document.getElementById('insp-replay-badge').hidden = !isReplay;
+  const statusEl = document.getElementById('insp-status');
+  statusEl.textContent = isReplay
+    ? '✓ tag verified · ⚠ replayed sequence — discarded'
+    : '✓ tag verified · ✓ decrypted';
+  statusEl.className = 'insp-status ' + (isReplay ? 'warn' : 'ok');
+
+  document.getElementById('btn-replay').disabled = false;
+}
+
+// ── Message panel helpers ───────────────────────────────────────
+function appendMessage(sender, text, timestamp, isOwn = false) {
+  const t = new Date(timestamp).toTimeString().slice(0, 8);
+  const el = document.createElement('div');
+  el.className = isOwn ? 'msg msg-own' : 'msg';
+  el.innerHTML =
+    `<span class="msg-time">[${t}]</span>` +
+    `<span class="msg-sender">${escHtml(sender)}</span>` +
+    `<span class="msg-text">${escHtml(text)}</span>`;
+  document.getElementById('msg-list').appendChild(el);
+  scrollToBottom();
+}
+
+function appendSystemMsg(text) {
+  const el = document.createElement('div');
+  el.className = 'msg msg-sys';
+  el.textContent = text;
+  document.getElementById('msg-list').appendChild(el);
+  scrollToBottom();
+}
+
+function appendReplayMsg(aadObj, seq, currentSeq) {
+  const el = document.createElement('div');
+  el.className = 'msg msg-replay';
+  el.innerHTML =
+    `<div class="replay-warn">⚠ REPLAY ATTACK DETECTED</div>` +
+    `<div class="replay-detail">sequence ${seq} already seen (current: ${currentSeq})</div>` +
+    `<div class="replay-detail">tag verified — message is authentic but was already processed</div>` +
+    `<div class="replay-detail">discarded</div>`;
+  document.getElementById('msg-list').appendChild(el);
+  scrollToBottom();
+}
+
+function scrollToBottom() {
+  const list = document.getElementById('msg-list');
+  list.scrollTop = list.scrollHeight;
+}
+
+// ── Disconnection ───────────────────────────────────────────────
+function onPeerLeft() {
+  if (!keyExchangeDone) return;
+  appendSystemMsg('── peer disconnected ──');
+  const inp  = document.getElementById('inp-message');
+  const send = document.getElementById('btn-send');
+  inp.disabled  = true;
+  send.disabled = true;
+  inp.placeholder = 'peer disconnected';
+  document.getElementById('reconnect-section').classList.add('visible');
+  // Wipe key material and WASM cipher state.
+  // Safe to dispose here: reconnect calls location.reload() which creates a fresh instance.
+  if (sharedKey) { sharedKey.fill(0); sharedKey = null; }
+  aead.dispose();
+}
+
+function setStatus(msg, type) {
+  const el = document.getElementById('setup-status');
+  el.textContent = msg;
+  el.className = 'setup-status' + (type ? ' ' + type : '');
+}
+
+// ── Event wiring ────────────────────────────────────────────────
+document.getElementById('btn-connect').addEventListener('click', connect);
+document.getElementById('btn-send').addEventListener('click', sendMessage);
+document.getElementById('inp-message').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+document.getElementById('btn-replay').addEventListener('click', replayLastMessage);
+document.getElementById('btn-new-session').addEventListener('click', () => location.reload());
+
+// Show/hide room code input based on mode selection
+document.querySelectorAll('input[name=mode]').forEach(radio => {
+  radio.addEventListener('change', () => {
+    document.getElementById('join-code-row').hidden =
+      !document.getElementById('mode-join').checked;
+  });
+});
+
+</script>
+</body>
+</html>

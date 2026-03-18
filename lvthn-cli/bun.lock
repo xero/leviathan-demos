@@ -1,0 +1,15 @@
+{
+  "lockfileVersion": 1,
+  "configVersion": 1,
+  "workspaces": {
+    "": {
+      "name": "lvthn-cli-v2",
+      "dependencies": {
+        "leviathan-crypto": "^1.0.0",
+      },
+    },
+  },
+  "packages": {
+    "leviathan-crypto": ["leviathan-crypto@1.0.0", "", {}, "sha512-9J0WBTBUzmXWljwMtHL31y7X7xv875bTdylaxCDFYam6m8LESAhat2Z3I3+uunnw7tapjs8nCPMBL3oY601GYg=="],
+  }
+}
