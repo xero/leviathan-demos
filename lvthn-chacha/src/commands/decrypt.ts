@@ -1,8 +1,8 @@
 /**
- * decrypt.ts — Decrypt a SRPT256S-format file or stdin.
+ * decrypt.ts — Decrypt an LVTHNCLI-format file or stdin.
  *
  * Auto-detects armored vs binary input — no --armor flag needed.
- * Per-chunk HMAC-SHA256 handles authentication — if auth fails,
+ * Per-chunk Poly1305 handles authentication — if auth fails,
  * pool.open() throws and no plaintext is produced.
  */
 
@@ -17,7 +17,7 @@ import {
 	isArmored,
 	KDF_SCRYPT,
 	KDF_KEYFILE,
-	CIPHER_SERPENT,
+	CIPHER_CHACHA,
 	LvthnHeader,
 } from '../format.ts';
 
@@ -71,7 +71,7 @@ export async function runDecrypt(args: ParsedArgs): Promise<void> {
 		die(msg, 5);
 	}
 
-	if (header.cipher !== CIPHER_SERPENT) {
+	if (header.cipher !== CIPHER_CHACHA) {
 		die('File was encrypted with a different cipher — use the correct tool to decrypt', 5);
 	}
 
@@ -135,7 +135,7 @@ export async function runDecrypt(args: ParsedArgs): Promise<void> {
 }
 
 /**
- * Read a keyfile — handles both raw binary and SRPT256S armored keyfiles.
+ * Read a keyfile — handles both raw binary and LVTHNCLI armored keyfiles.
  */
 async function readKeyFile(path: string): Promise<Uint8Array> {
 	const f = Bun.file(path);

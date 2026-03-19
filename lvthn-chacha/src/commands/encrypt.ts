@@ -5,7 +5,7 @@
  *   --passphrase: scrypt (N=32768, r=8, p=1) → 32-byte key
  *   --keyfile:    raw keyfile bytes (exactly 32 bytes)
  *
- * Output format: SRPT256S binary blob (see FORMAT.md), optionally armored.
+ * Output format: LVTHNCLI binary blob (see FORMAT.md), optionally armored.
  */
 
 import { ParsedArgs, die, info } from '../cli.ts';
@@ -20,7 +20,7 @@ import {
 	KDF_SCRYPT,
 	KDF_KEYFILE,
 	FORMAT_VERSION,
-	CIPHER_SERPENT,
+	CIPHER_CHACHA,
 } from '../format.ts';
 
 export async function runEncrypt(args: ParsedArgs): Promise<void> {
@@ -84,7 +84,7 @@ export async function runEncrypt(args: ParsedArgs): Promise<void> {
 
 		const poolOutput = await pool.seal(key, plaintext);
 		const finalBlob  = encodeBlob(
-			{ version: FORMAT_VERSION, cipher: CIPHER_SERPENT, kdf, flags: 0x00, salt },
+			{ version: FORMAT_VERSION, cipher: CIPHER_CHACHA, kdf, flags: 0x00, salt },
 			poolOutput,
 		);
 
@@ -117,7 +117,7 @@ export async function runEncrypt(args: ParsedArgs): Promise<void> {
 }
 
 /**
- * Read a keyfile — handles both raw binary and SRPT256S armored keyfiles.
+ * Read a keyfile — handles both raw binary and LVTHNCLI armored keyfiles.
  */
 async function readKeyFile(path: string): Promise<Uint8Array> {
 	const f = Bun.file(path);

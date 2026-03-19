@@ -1,0 +1,17 @@
+{
+  "name": "lvthn-chacha",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "bun run build.ts",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "leviathan-crypto": "latest"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "bun-types": "latest"
+  }
+}
