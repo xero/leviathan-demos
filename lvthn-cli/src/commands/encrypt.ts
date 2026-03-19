@@ -1,16 +1,17 @@
 /**
- * encrypt.ts — Encrypt a file or stdin using SerpentStreamSealer.
+ * encrypt.ts — Encrypt a file or stdin using SealPool.
  *
  * Key derivation:
- *   --passphrase: scrypt (N=32768, r=8, p=1) → 64-byte key
- *   --keyfile:    raw keyfile bytes (exactly 64 bytes)
+ *   --passphrase: scrypt (N=32768, r=8, p=1) → 32-byte key
+ *   --keyfile:    raw keyfile bytes (exactly 32 bytes)
  *
  * Output format: SRPT256S binary blob (see FORMAT.md), optionally armored.
  */
 
 import { ParsedArgs, die, info } from '../cli.ts';
-import { deriveKey, seal } from '../crypto.ts';
+import { deriveKey } from '../crypto.ts';
 import { startSpinner, stopSpinner, waitMs, FULL_CYCLE_MS } from '../spinner.ts';
+import { SealPool, registerPool, unregisterPool } from '../pool.ts';
 import {
 	encodeBlob,
 	armor,
@@ -56,77 +57,58 @@ export async function runEncrypt(args: ParsedArgs): Promise<void> {
 		}
 	}
 
-	// Start animation while encrypting
-	startSpinner();
-	const minDisplay = waitMs(FULL_CYCLE_MS);
+	const pool = await SealPool.create();
+	registerPool(pool);
 
-	// Derive or load key
-	let key: Uint8Array;
-	let kdf: number;
-	let salt: Uint8Array;
-
-	if (passphrase) {
-		kdf = KDF_SCRYPT;
-		try {
-			const derived = await deriveKey(passphrase);
-			key = derived.key;
-			salt = derived.salt;
-		} catch (err) {
-			const msg = err instanceof Error ? err.message : String(err);
-			die(`Key derivation failed: ${msg}`, 2);
-		}
-	} else {
-		// keyfile
-		kdf = KDF_KEYFILE;
-		salt = new Uint8Array(32); // zeroed per format spec
-		const rawKey = await readKeyFile(keyfile as string);
-		if (rawKey.length !== 64) {
-			die(
-				`Invalid keyfile size: ${rawKey.length} bytes (expected 64)`,
-				2,
-			);
-		}
-		key = rawKey;
-	}
-
-	// Seal plaintext
-	let streamHeader: Uint8Array;
-	let ciphertext: Uint8Array;
 	try {
-		({ streamHeader, ciphertext } = await seal(key, plaintext));
+		startSpinner();
+		const minDisplay = waitMs(FULL_CYCLE_MS);
+
+		let key: Uint8Array;
+		let kdf: number;
+		let salt: Uint8Array;
+
+		if (passphrase) {
+			kdf = KDF_SCRYPT;
+			const derived = await deriveKey(passphrase);
+			key  = derived.key;
+			salt = derived.salt;
+		} else {
+			kdf  = KDF_KEYFILE;
+			salt = new Uint8Array(32);
+			key  = await readKeyFile(keyfile as string);
+			if (key.length !== 32)
+				die(`Invalid keyfile size: ${key.length} bytes (expected 32)`, 2);
+		}
+
+		const poolOutput = await pool.seal(key, plaintext);
+		const finalBlob  = encodeBlob({ version: FORMAT_VERSION, flags: 0x00, kdf, salt }, poolOutput);
+
+		await minDisplay;
+		stopSpinner();
+
+		// Write output
+		if (outputArg) {
+			if (useArmor) {
+				await Bun.write(outputArg, armor(finalBlob));
+			} else {
+				await Bun.write(outputArg, finalBlob);
+			}
+			info(`Encrypted: ${outputArg}`);
+		} else {
+			if (useArmor) {
+				await Bun.stdout.write(armor(finalBlob));
+			} else {
+				await Bun.stdout.write(finalBlob);
+			}
+		}
 	} catch (err) {
+		stopSpinner();
 		const msg = err instanceof Error ? err.message : String(err);
 		die(`Encryption failed: ${msg}`, 2);
-	}
-
-	// Build full blob
-	const header = {
-		version: FORMAT_VERSION,
-		flags: 0x00,
-		kdf,
-		salt,
-		streamHeader,
-	};
-	const finalBlob = encodeBlob(header, ciphertext);
-
-	// Stop animation
-	await minDisplay;
-	stopSpinner();
-
-	// Write output
-	if (outputArg) {
-		if (useArmor) {
-			await Bun.write(outputArg, armor(finalBlob));
-		} else {
-			await Bun.write(outputArg, finalBlob);
-		}
-		info(`Encrypted: ${outputArg}`);
-	} else {
-		if (useArmor) {
-			await Bun.stdout.write(armor(finalBlob));
-		} else {
-			await Bun.stdout.write(finalBlob);
-		}
+	} finally {
+		pool.dispose();
+		unregisterPool();
 	}
 }
 

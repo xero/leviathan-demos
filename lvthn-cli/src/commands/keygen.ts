@@ -37,5 +37,5 @@ export async function runKeygen(args: ParsedArgs): Promise<void> {
 		await Bun.write(outputPath, keyData);
 	}
 
-	info(`Generated 512-bit keyfile: ${outputPath}`);
+	info(`Generated 256-bit keyfile: ${outputPath}`);
 }

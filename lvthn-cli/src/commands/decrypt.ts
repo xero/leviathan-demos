@@ -2,13 +2,14 @@
  * decrypt.ts — Decrypt a SRPT256S-format file or stdin.
  *
  * Auto-detects armored vs binary input — no --armor flag needed.
- * SerpentStreamOpener handles authentication internally — if auth fails,
- * open() throws and no plaintext is produced.
+ * Per-chunk HMAC-SHA256 handles authentication — if auth fails,
+ * pool.open() throws and no plaintext is produced.
  */
 
 import { ParsedArgs, die, info } from '../cli.ts';
-import { deriveKey, open } from '../crypto.ts';
+import { deriveKey } from '../crypto.ts';
 import { startSpinner, stopSpinner, waitMs, FULL_CYCLE_MS } from '../spinner.ts';
+import { SealPool, registerPool, unregisterPool } from '../pool.ts';
 import {
 	decodeBlob,
 	dearmor,
@@ -61,9 +62,9 @@ export async function runDecrypt(args: ParsedArgs): Promise<void> {
 
 	// Parse SRPT256S header
 	let header: Srpt256sHeader;
-	let ciphertext: Uint8Array;
+	let poolOutput: Uint8Array;
 	try {
-		({ header, ciphertext } = decodeBlob(blob));
+		({ header, poolOutput } = decodeBlob(blob));
 	} catch (err) {
 		const msg = err instanceof Error ? err.message : String(err);
 		die(msg, 5);
@@ -83,53 +84,48 @@ export async function runDecrypt(args: ParsedArgs): Promise<void> {
 		);
 	}
 
-	// Start animation while decrypting
-	startSpinner();
-	const minDisplay = waitMs(FULL_CYCLE_MS);
+	const pool = await SealPool.create();
+	registerPool(pool);
 
-	// Derive or load key (always 64 bytes)
-	let key: Uint8Array;
-	if (passphrase) {
-		try {
+	try {
+		startSpinner();
+		const minDisplay = waitMs(FULL_CYCLE_MS);
+
+		let key: Uint8Array;
+		if (passphrase) {
 			const derived = await deriveKey(passphrase, header.salt);
 			key = derived.key;
-		} catch (err) {
-			const msg = err instanceof Error ? err.message : String(err);
-			die(`Key derivation failed: ${msg}`, 2);
+		} else {
+			key = await readKeyFile(keyfile as string);
+			if (key.length !== 32)
+				die(`Invalid keyfile size: ${key.length} bytes (expected 32)`, 2);
 		}
-	} else {
-		const rawKey = await readKeyFile(keyfile as string);
-		if (rawKey.length !== 64) {
-			die(
-				`Invalid keyfile size: ${rawKey.length} bytes (expected 64)`,
-				2,
-			);
+
+		const plaintext = await pool.open(key, poolOutput);
+
+		await minDisplay;
+		stopSpinner();
+
+		// Write output
+		if (outputArg) {
+			const outFile = Bun.file(outputArg);
+			if ((await outFile.exists()) && !force) {
+				die(`Output file already exists: ${outputArg} (use --force to overwrite)`, 4);
+			}
+			await Bun.write(outputArg, plaintext);
+			info(`Decrypted: ${outputArg}`);
+		} else {
+			await Bun.stdout.write(plaintext);
 		}
-		key = rawKey;
-	}
-
-	// Open (authenticate + decrypt) via SerpentStreamOpener
-	let plaintext: Uint8Array;
-	try {
-		plaintext = await open(key, header.streamHeader, ciphertext);
-	} catch {
-		die('authentication failed — data may be corrupted or tampered', 1);
-	}
-
-	// Stop animation
-	await minDisplay;
-	stopSpinner();
-
-	// Check output doesn't already exist
-	if (outputArg) {
-		const outFile = Bun.file(outputArg);
-		if ((await outFile.exists()) && !force) {
-			die(`Output file already exists: ${outputArg} (use --force to overwrite)`, 4);
-		}
-		await Bun.write(outputArg, plaintext);
-		info(`Decrypted: ${outputArg}`);
-	} else {
-		await Bun.stdout.write(plaintext);
+	} catch (err) {
+		stopSpinner();
+		const msg = err instanceof Error ? err.message : String(err);
+		if (msg.includes('authentication failed'))
+			die('authentication failed — data may be corrupted or tampered', 1);
+		die(`Decryption failed: ${msg}`, 2);
+	} finally {
+		pool.dispose();
+		unregisterPool();
 	}
 }
 

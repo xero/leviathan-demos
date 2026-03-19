@@ -10,6 +10,15 @@ import { parseCliArgs, printHelp, die } from './cli.ts';
 import { runEncrypt } from './commands/encrypt.ts';
 import { runDecrypt } from './commands/decrypt.ts';
 import { runKeygen } from './commands/keygen.ts';
+import { disposeActivePool } from './pool.ts';
+import { stopSpinner } from './spinner.ts';
+
+// Safety net: guarantee terminal and key material are cleaned up on any exit.
+// The command's try/finally is the primary path; this catches everything else.
+process.on('exit', () => {
+	stopSpinner();       // restores cursor — no-op if not running
+	disposeActivePool(); // wipes WASM key material — no-op if already disposed
+});
 
 const args = parseCliArgs();
 

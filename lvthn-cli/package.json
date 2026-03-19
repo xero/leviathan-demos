@@ -10,5 +10,8 @@
   },
   "dependencies": {
     "leviathan-crypto": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.11"
   }
 }
