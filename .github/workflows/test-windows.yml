@@ -1,0 +1,165 @@
+name: test-windows
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'demos/lvthncli/**'
+
+jobs:
+  smoke-test:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: demos/lvthncli
+
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: '1.3.11'
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build
+        run: bun run build.ts
+
+      - name: Verify binary exists
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "dist\lvthn.exe")) {
+            Write-Error "dist\lvthn.exe not found after build"
+            exit 1
+          }
+          $sz = [Math]::Round((Get-Item "dist\lvthn.exe").Length / 1MB, 1)
+          Write-Host "Binary: dist\lvthn.exe - $sz MB"
+
+      - name: Smoke tests
+        shell: pwsh
+        run: |
+          $PASS = 0
+          $FAIL = 0
+          $RESULTS = @()
+
+          function Test-Case {
+            param([string]$Name, [scriptblock]$Block)
+            Write-Host ""
+            Write-Host "TEST: $Name"
+            try {
+              & $Block
+              Write-Host "  PASS"
+              $script:PASS++
+              $script:RESULTS += "PASS  $Name"
+            } catch {
+              Write-Host "  FAIL: $_"
+              $script:FAIL++
+              $script:RESULTS += "FAIL  $Name  [$_]"
+            }
+          }
+
+          Set-Location dist
+          $distDir = (Get-Location).Path
+          $binary  = "$distDir\lvthn.exe"
+
+          Write-Host ""
+          Write-Host "=== SMOKE TESTS ==="
+
+          Test-Case "--help exits 0" {
+            $out = & $binary --help 2>&1
+            Write-Host "  (first line: $($out[0]))"
+            if ($LASTEXITCODE -ne 0) { throw "exit code $LASTEXITCODE" }
+          }
+
+          Test-Case "keygen: 32-byte key" {
+            & $binary keygen -o "$distDir\test.key" --force 2>&1 | Out-Null
+            $size = (Get-Item "$distDir\test.key").Length
+            if ($size -ne 32) { throw "expected 32 bytes, got $size" }
+          }
+
+          Test-Case "keygen --armor: correct header" {
+            & $binary keygen --armor -o "$distDir\test-armored.key" --force 2>&1 | Out-Null
+            $line1 = Get-Content "$distDir\test-armored.key" | Select-Object -First 1
+            if ($line1 -ne "-----BEGIN LVTHNCLI KEY-----") { throw "got: $line1" }
+          }
+
+          # Create small test file
+          $plaintext = "hello leviathan - windows smoke test"
+          [System.IO.File]::WriteAllText("$distDir\small.txt", $plaintext, [System.Text.Encoding]::UTF8)
+
+          Test-Case "serpent keyfile: small file round-trip" {
+            & $binary encrypt -k "$distDir\test.key" "$distDir\small.txt" -o "$distDir\s-enc.bin" 2>&1 | Out-Null
+            & $binary decrypt -k "$distDir\test.key" "$distDir\s-enc.bin" -o "$distDir\s-dec.txt" 2>&1 | Out-Null
+            $h1 = (Get-FileHash "$distDir\small.txt" -Algorithm SHA256).Hash
+            $h2 = (Get-FileHash "$distDir\s-dec.txt" -Algorithm SHA256).Hash
+            if ($h1 -ne $h2) { throw "hash mismatch" }
+          }
+
+          Test-Case "serpent passphrase: small file round-trip" {
+            & $binary encrypt -p "correct horse battery" "$distDir\small.txt" -o "$distDir\pp-enc.bin" 2>&1 | Out-Null
+            & $binary decrypt -p "correct horse battery" "$distDir\pp-enc.bin" -o "$distDir\pp-dec.txt" 2>&1 | Out-Null
+            $h1 = (Get-FileHash "$distDir\small.txt" -Algorithm SHA256).Hash
+            $h2 = (Get-FileHash "$distDir\pp-dec.txt" -Algorithm SHA256).Hash
+            if ($h1 -ne $h2) { throw "hash mismatch" }
+          }
+
+          Test-Case "armor: encrypt + decrypt" {
+            $armorOut = & $binary encrypt -k "$distDir\test.key" "$distDir\small.txt" --armor -o "$distDir\armored.txt" 2>&1
+            if ($LASTEXITCODE -ne 0) { throw "encrypt failed: $armorOut" }
+            $line1 = Get-Content "$distDir\armored.txt" | Select-Object -First 1
+            if ($line1 -ne "-----BEGIN LVTHNCLI ENCRYPTED MESSAGE-----") { throw "bad header: $line1" }
+            & $binary decrypt -k "$distDir\test.key" "$distDir\armored.txt" -o "$distDir\armored-dec.txt" 2>&1 | Out-Null
+            $h1 = (Get-FileHash "$distDir\small.txt"      -Algorithm SHA256).Hash
+            $h2 = (Get-FileHash "$distDir\armored-dec.txt" -Algorithm SHA256).Hash
+            if ($h1 -ne $h2) { throw "hash mismatch" }
+          }
+
+          Test-Case "chacha: keyfile round-trip" {
+            & $binary encrypt --cipher chacha -k "$distDir\test.key" "$distDir\small.txt" -o "$distDir\cc-enc.bin" 2>&1 | Out-Null
+            & $binary decrypt -k "$distDir\test.key" "$distDir\cc-enc.bin" -o "$distDir\cc-dec.txt" 2>&1 | Out-Null
+            $h1 = (Get-FileHash "$distDir\small.txt" -Algorithm SHA256).Hash
+            $h2 = (Get-FileHash "$distDir\cc-dec.txt" -Algorithm SHA256).Hash
+            if ($h1 -ne $h2) { throw "hash mismatch" }
+          }
+
+          Test-Case "chacha: passphrase round-trip" {
+            & $binary encrypt --cipher chacha -p "staple horse battery" "$distDir\small.txt" -o "$distDir\cc-pp-enc.bin" 2>&1 | Out-Null
+            & $binary decrypt -p "staple horse battery" "$distDir\cc-pp-enc.bin" -o "$distDir\cc-pp-dec.txt" 2>&1 | Out-Null
+            $h1 = (Get-FileHash "$distDir\small.txt"    -Algorithm SHA256).Hash
+            $h2 = (Get-FileHash "$distDir\cc-pp-dec.txt" -Algorithm SHA256).Hash
+            if ($h1 -ne $h2) { throw "hash mismatch" }
+          }
+
+          Test-Case "large file: worker queue path (~80 chunks)" {
+            Write-Host "  generating 5 MB file..."
+            $bytes = New-Object byte[] (5 * 1024 * 1024)
+            [System.Random]::new(42).NextBytes($bytes)
+            [System.IO.File]::WriteAllBytes("$distDir\large.bin", $bytes)
+            & $binary encrypt -k "$distDir\test.key" "$distDir\large.bin" -o "$distDir\large-enc.bin" 2>&1 | Out-Null
+            & $binary decrypt -k "$distDir\test.key" "$distDir\large-enc.bin" -o "$distDir\large-dec.bin" 2>&1 | Out-Null
+            $h1 = (Get-FileHash "$distDir\large.bin"     -Algorithm SHA256).Hash
+            $h2 = (Get-FileHash "$distDir\large-dec.bin" -Algorithm SHA256).Hash
+            if ($h1 -ne $h2) { throw "hash mismatch" }
+          }
+
+          Test-Case "wrong passphrase: exits with code 1" {
+            & $binary encrypt -p "known-pass" "$distDir\small.txt" -o "$distDir\wp-enc.bin" 2>&1 | Out-Null
+            if ($LASTEXITCODE -ne 0) { throw "setup encrypt failed: exit $LASTEXITCODE" }
+            & $binary decrypt -p "wrong" "$distDir\wp-enc.bin" -o "$distDir\wp-dec.bin" 2>&1 | Out-Null
+            if ($LASTEXITCODE -ne 1) { throw "expected exit 1, got $LASTEXITCODE" }
+          }
+
+          # Summary
+          Write-Host ""
+          Write-Host "=== RESULTS ==="
+          Write-Host ""
+          foreach ($r in $RESULTS) {
+            Write-Host $r
+          }
+          Write-Host ""
+          Write-Host "Passed: $PASS   Failed: $FAIL"
+
+          if ($FAIL -gt 0) { exit 1 }
