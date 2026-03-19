@@ -1,5 +1,5 @@
 /**
- * main.ts — Entry point for lvthn-chacha.
+ * main.ts — Entry point for lvthncli-chacha.
  * XChaCha20-Poly1305 only needs the chacha20 WASM module.
  */
 

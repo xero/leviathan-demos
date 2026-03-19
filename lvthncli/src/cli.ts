@@ -2,25 +2,25 @@
  * cli.ts — Argument parsing, help text, and error formatting.
  *
  * Uses Node.js util.parseArgs (built into Bun) for argument parsing.
- * See: docs/bun/guides/process/argv.mdx
  */
 
 import { parseArgs } from 'util';
 import { stopSpinner } from './spinner.ts';
 
 export interface ParsedArgs {
-  command: string | null;
-  passphrase: string | undefined;
-  keyfile: string | undefined;
-  output: string | undefined;
-  armor: boolean;
-  force: boolean;
-  help: boolean;
-  positionals: string[];  // [input?, output?] after the command
+  command:     string | null;
+  passphrase:  string | undefined;
+  keyfile:     string | undefined;
+  output:      string | undefined;
+  cipher:      string;   // 'serpent' | 'chacha', default 'serpent'
+  armor:       boolean;
+  force:       boolean;
+  help:        boolean;
+  positionals: string[];
 }
 
 const HELP_TEXT = `
-lvthn — Serpent-256 file encryption (leviathan demo)
+lvthn — Serpent-256 + XChaCha20-Poly1305 file encryption (leviathan demo)
 
 Usage:
   lvthn <command> [options] [input] [output]
@@ -34,6 +34,7 @@ Commands:
 Encrypt options:
   -p, --passphrase <phrase>   Encrypt using passphrase (scrypt key derivation)
   -k, --keyfile <path>        Encrypt using a keyfile
+  -c, --cipher <name>         Cipher: serpent (default) or chacha
       --armor                 Output base64 armored text instead of binary
   -o, --output <path>         Output file path
       --force                 Overwrite output file if it exists
@@ -43,6 +44,7 @@ Decrypt options:
   -k, --keyfile <path>        Keyfile for decryption
   -o, --output <path>         Output file path (default: stdout)
 
+  Cipher is detected automatically from the file header — --cipher is not needed.
   Auto-detects armored vs binary input — no --armor flag needed on decrypt.
 
 Keygen options:
@@ -51,7 +53,7 @@ Keygen options:
 
 Examples:
   lvthn encrypt -p "correct horse battery" secret.txt
-  lvthn encrypt -k my.key secret.txt secret.enc
+  lvthn encrypt --cipher chacha -k my.key secret.txt secret.enc
   lvthn encrypt -p "passphrase" --armor < message.txt > message.enc
   cat secret.txt | lvthn encrypt -k my.key --armor
   lvthn decrypt -p "correct horse battery" secret.enc
@@ -69,16 +71,8 @@ Exit codes:
   5   Invalid or unrecognized file format
 `.trim();
 
-/**
- * Parse Bun.argv into a structured ParsedArgs object.
- * Bun.argv = [bunPath, scriptPath, ...actual args]
- * We strip the first two elements before parsing.
- */
 export function parseCliArgs(): ParsedArgs {
-	// Bun.argv[0] = bun executable, Bun.argv[1] = script path
 	const raw = Bun.argv.slice(2);
-
-	// Extract the command (first non-flag argument)
 	const command = raw.length > 0 && !raw[0].startsWith('-') ? raw[0] : null;
 	const argsAfterCommand = command !== null ? raw.slice(1) : raw;
 
@@ -88,11 +82,12 @@ export function parseCliArgs(): ParsedArgs {
 			args: argsAfterCommand,
 			options: {
 				passphrase: { type: 'string',  short: 'p' },
-				keyfile: { type: 'string',  short: 'k' },
-				output: { type: 'string',  short: 'o' },
-				armor: { type: 'boolean'             },
-				force: { type: 'boolean'             },
-				help: { type: 'boolean', short: 'h' },
+				keyfile:    { type: 'string',  short: 'k' },
+				output:     { type: 'string',  short: 'o' },
+				cipher:     { type: 'string',  short: 'c' },
+				armor:      { type: 'boolean'             },
+				force:      { type: 'boolean'             },
+				help:       { type: 'boolean', short: 'h' },
 			},
 			strict: false,
 			allowPositionals: true,
@@ -104,33 +99,28 @@ export function parseCliArgs(): ParsedArgs {
 
 	return {
 		command,
-		passphrase: parsed.values.passphrase as string | undefined,
-		keyfile: parsed.values.keyfile    as string | undefined,
-		output: parsed.values.output     as string | undefined,
-		armor: (parsed.values.armor     as boolean | undefined) ?? false,
-		force: (parsed.values.force     as boolean | undefined) ?? false,
-		help: (parsed.values.help      as boolean | undefined) ?? false,
+		passphrase:  parsed.values.passphrase as string | undefined,
+		keyfile:     parsed.values.keyfile    as string | undefined,
+		output:      parsed.values.output     as string | undefined,
+		cipher:      (parsed.values.cipher    as string | undefined) ?? 'serpent',
+		armor:       (parsed.values.armor     as boolean | undefined) ?? false,
+		force:       (parsed.values.force     as boolean | undefined) ?? false,
+		help:        (parsed.values.help      as boolean | undefined) ?? false,
 		positionals: parsed.positionals as string[],
 	};
 }
 
-/** Print help to stdout and exit 0. */
 export function printHelp(): never {
 	process.stdout.write(HELP_TEXT + '\n');
 	process.exit(0);
 }
 
-/**
- * Print an error message to stderr and exit with the given code.
- * Never prints stack traces — only human-readable messages.
- */
 export function die(message: string, code = 2): never {
 	stopSpinner();
 	process.stderr.write(`Error: ${message}\n`);
 	process.exit(code);
 }
 
-/** Print a status message to stderr (not stdout — stdout is for data). */
 export function info(message: string): void {
 	process.stderr.write(`${message}\n`);
 }

@@ -20,10 +20,10 @@ export interface ParsedArgs {
 }
 
 const HELP_TEXT = `
-lvthn — Serpent-256 file encryption (leviathan demo)
+lvthncli-chacha — XChaCha20-Poly1305 file encryption (leviathan demo)
 
 Usage:
-  lvthn <command> [options] [input] [output]
+  lvthncli-chacha <command> [options] [input] [output]
 
 Commands:
   encrypt   Encrypt a file or stdin
@@ -50,15 +50,15 @@ Keygen options:
       --armor                 Output base64 armored keyfile
 
 Examples:
-  lvthn encrypt -p "correct horse battery" secret.txt
-  lvthn encrypt -k my.key secret.txt secret.enc
-  lvthn encrypt -p "passphrase" --armor < message.txt > message.enc
-  cat secret.txt | lvthn encrypt -k my.key --armor
-  lvthn decrypt -p "correct horse battery" secret.enc
-  lvthn decrypt -k my.key secret.enc decrypted.txt
-  lvthn keygen
-  lvthn keygen -o my.key
-  lvthn keygen --armor -o my.key
+  lvthncli-chacha encrypt -p "correct horse battery" secret.txt
+  lvthncli-chacha encrypt -k my.key secret.txt secret.enc
+  lvthncli-chacha encrypt -p "passphrase" --armor < message.txt > message.enc
+  cat secret.txt | lvthncli-chacha encrypt -k my.key --armor
+  lvthncli-chacha decrypt -p "correct horse battery" secret.enc
+  lvthncli-chacha decrypt -k my.key secret.enc decrypted.txt
+  lvthncli-chacha keygen
+  lvthncli-chacha keygen -o my.key
+  lvthncli-chacha keygen --armor -o my.key
 
 Exit codes:
   0   Success

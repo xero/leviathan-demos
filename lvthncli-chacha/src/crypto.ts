@@ -1,5 +1,5 @@
 /**
- * crypto.ts — Key derivation and key generation for lvthn-chacha.
+ * crypto.ts — Key derivation and key generation for lvthncli-chacha.
  *
  * Provides:
  *   - deriveKey()   — scrypt key derivation (32-byte output)

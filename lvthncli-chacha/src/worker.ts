@@ -1,6 +1,6 @@
 // src/worker.ts — XChaCha20-Poly1305 chunk worker.
 //
-// Compare with lvthn-cli/src/worker.ts:
+// Compare with lvthncli-serpent/src/worker.ts:
 //   - One WASM module (chacha) instead of two (serpent + sha2)
 //   - No HKDF — nonce is passed in directly from the main thread
 //   - xcEncrypt/xcDecrypt handle both encryption and authentication (AEAD)

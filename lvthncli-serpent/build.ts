@@ -37,7 +37,7 @@ process.stdout.write('Building binary...\n');
 const result = await Bun.build({
 	entrypoints: ['src/main.ts'],
 	compile: {
-		outfile: './dist/lvthn',
+		outfile: './dist/lvthncli-serpent',
 	},
 });
 
@@ -47,5 +47,5 @@ if (!result.success) {
 	process.exit(1);
 }
 
-const size = statSync('./dist/lvthn').size;
-process.stdout.write(`Built: ./dist/lvthn  (${(size / 1024).toFixed(1)} KB)\n`);
+const size = statSync('./dist/lvthncli-serpent').size;
+process.stdout.write(`Built: ./dist/lvthncli-serpent  (${(size / 1024).toFixed(1)} KB)\n`);

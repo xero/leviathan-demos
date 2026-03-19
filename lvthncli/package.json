@@ -1,0 +1,16 @@
+{
+  "name": "lvthncli",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "bun run build.ts",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "leviathan-crypto": "1.0.0"
+  },
+  "devDependencies": {
+    "bun-types": "1.3.11"
+  }
+}

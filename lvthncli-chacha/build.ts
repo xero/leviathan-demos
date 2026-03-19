@@ -27,7 +27,7 @@ process.stdout.write('Building binary...\n');
 const result = await Bun.build({
 	entrypoints: ['src/main.ts'],
 	compile: {
-		outfile: './dist/lvthn-chacha',
+		outfile: './dist/lvthncli-chacha',
 	},
 });
 
@@ -37,5 +37,5 @@ if (!result.success) {
 	process.exit(1);
 }
 
-const size = statSync('./dist/lvthn-chacha').size;
-process.stdout.write(`Built: ./dist/lvthn-chacha  (${(size / 1024).toFixed(1)} KB)\n`);
+const size = statSync('./dist/lvthncli-chacha').size;
+process.stdout.write(`Built: ./dist/lvthncli-chacha  (${(size / 1024).toFixed(1)} KB)\n`);

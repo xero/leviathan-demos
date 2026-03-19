@@ -96,7 +96,6 @@ function hkdfSha256(
 	const t2 = hmacSha256(prk, t2In);
 	return { encKey: t1, macKey: t2 };
 }
-let self =  this;
 // Build the 54-byte HKDF info buffer.
 //
 // CRITICAL: DOMAIN_BYTES is 16 bytes but offset advances by 17,

@@ -1,6 +1,6 @@
 // src/chacha/pool.ts — XChaCha20-Poly1305 worker pool.
 //
-// Compare with lvthn-cli/src/pool.ts:
+// Compare with lvthncli-serpent/src/pool.ts:
 //   - One WASM module (chacha.wasm) instead of two
 //   - No HKDF — per-chunk nonce = streamNonce(16) || u64be(index)(8)
 //   - Tag is 16 bytes (Poly1305) not 32 (HMAC-SHA256)
