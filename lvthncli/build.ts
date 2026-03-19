@@ -27,10 +27,11 @@ async function bundleWorker(entry: string, out: string, label: string): Promise<
 await bundleWorker('src/serpent/worker.ts', 'src/serpent/worker-bundle.ts', 'Serpent');
 await bundleWorker('src/chacha/worker.ts',  'src/chacha/worker-bundle.ts',  'ChaCha');
 
+const outfile = process.platform === 'win32' ? './dist/lvthn.exe' : './dist/lvthn';
 process.stdout.write('Building binary...\n');
 const result = await Bun.build({
 	entrypoints: ['src/main.ts'],
-	compile: { outfile: './dist/lvthn' },
+	compile: { outfile: outfile },
 });
 if (!result.success) {
 	process.stderr.write('Build failed:\n');
@@ -38,5 +39,5 @@ if (!result.success) {
 	process.exit(1);
 }
 
-const size = statSync('./dist/lvthn').size;
-process.stdout.write(`Built: ./dist/lvthn  (${(size / 1024).toFixed(1)} KB)\n`);
+const size = statSync(outfile).size;
+process.stdout.write(`Built: ${outfile}  (${(size / 1024).toFixed(1)} KB)\n`);
