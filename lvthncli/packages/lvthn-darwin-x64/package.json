@@ -1,6 +1,6 @@
 {
   "name": "@xero/lvthn-darwin-x64",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "macOS x64 binary for lvthn",
   "os": [
     "darwin"

@@ -1,6 +1,6 @@
 {
   "name": "lvthn",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Serpent-256 + XChaCha20-Poly1305 file encryption CLI",
   "license": "MIT",
   "repository": {
@@ -21,11 +21,11 @@
     "lint": "eslint ."
   },
   "optionalDependencies": {
-    "@xero/lvthn-linux-x64": "1.0.1",
-    "@xero/lvthn-linux-arm64": "1.0.1",
-    "@xero/lvthn-darwin-x64": "1.0.1",
-    "@xero/lvthn-darwin-arm64": "1.0.1",
-    "@xero/lvthn-win32-x64": "1.0.1"
+    "@xero/lvthn-linux-x64": "1.0.2",
+    "@xero/lvthn-linux-arm64": "1.0.2",
+    "@xero/lvthn-darwin-x64": "1.0.2",
+    "@xero/lvthn-darwin-arm64": "1.0.2",
+    "@xero/lvthn-win32-x64": "1.0.2"
   },
   "publishConfig": {
     "access": "public",
