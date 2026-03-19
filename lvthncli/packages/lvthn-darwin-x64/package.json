@@ -1,14 +1,20 @@
 {
   "name": "@xero/lvthn-darwin-x64",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "macOS x64 binary for lvthn",
-  "os": ["darwin"],
-  "cpu": ["x64"],
+  "os": [
+    "darwin"
+  ],
+  "cpu": [
+    "x64"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/xero/leviathan-demos.git",
     "directory": "lvthncli/packages/lvthn-darwin-x64"
   },
-  "publishConfig": { "access": "public" }
+  "publishConfig": {
+    "access": "public"
+  }
 }
