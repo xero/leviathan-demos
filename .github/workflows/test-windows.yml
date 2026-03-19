@@ -5,7 +5,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'demos/lvthncli/**'
+      - 'lvthncli/**'
 
 jobs:
   smoke-test:
@@ -13,24 +13,24 @@ jobs:
     timeout-minutes: 20
 
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-
-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - name: setup bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
-          bun-version: '1.3.11'
+          bun-version: 'latest'
 
       - name: Install dependencies
-        working-directory: demos\lvthncli
+        working-directory: lvthncli
         run: bun install
 
       - name: Build
-        working-directory: demos\lvthncli
+        working-directory: lvthncli
         run: bun run build.ts
 
       - name: Verify binary exists
         shell: pwsh
         run: |
-          $bin = "demos\lvthncli\dist\lvthn.exe"
+          $bin = "lvthncli\dist\lvthn.exe"
           if (-not (Test-Path $bin)) {
             Write-Error "$bin not found after build"
             exit 1
@@ -61,7 +61,7 @@ jobs:
             }
           }
 
-          Set-Location "demos\lvthncli\dist"
+          Set-Location "lvthncli\dist"
           $distDir = (Get-Location).Path
           $binary  = "$distDir\lvthn.exe"
 
