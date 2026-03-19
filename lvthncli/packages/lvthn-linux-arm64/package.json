@@ -1,0 +1,14 @@
+{
+  "name": "@xero/lvthn-linux-arm64",
+  "version": "1.0.0",
+  "description": "Linux arm64 binary for lvthn",
+  "os": ["linux"],
+  "cpu": ["arm64"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xero/leviathan-demos.git",
+    "directory": "lvthncli/packages/lvthn-linux-arm64"
+  },
+  "publishConfig": { "access": "public" }
+}

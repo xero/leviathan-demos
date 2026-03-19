@@ -1,0 +1,195 @@
+name: publish-lvthncli
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: 'Version bump type'
+        required: true
+        type: choice
+        options: [patch, minor, major]
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.3.11'
+
+      - name: Setup Node (npm registry auth)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Verify npm token
+        run: npm whoami
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Configure git identity
+        run: |
+          git config user.name  "leviathan-cicd[bot]"
+          git config user.email "leviathan-cicd[bot]@users.noreply.github.com"
+
+      - name: Bump version
+        id: version
+        working-directory: lvthncli
+        run: |
+          CURRENT=$(node -p "require('./package.json').version")
+          NEW=$(node -e "
+            const [major, minor, patch] = '$CURRENT'.split('.').map(Number);
+            const bump = '${{ inputs.bump }}';
+            if (bump === 'major') console.log((major+1) + '.0.0');
+            else if (bump === 'minor') console.log(major + '.' + (minor+1) + '.0');
+            else console.log(major + '.' + minor + '.' + (patch+1));
+          ")
+          echo "VERSION=$NEW" >> $GITHUB_ENV
+          echo "Bumping $CURRENT -> $NEW"
+
+          # Update root package.json
+          node -e "
+            const fs = require('fs');
+            const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+            pkg.version = '$NEW';
+            for (const k of Object.keys(pkg.optionalDependencies || {}))
+              pkg.optionalDependencies[k] = '$NEW';
+            fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+          "
+
+          # Update all platform package.json versions
+          for dir in packages/*/; do
+            node -e "
+              const fs = require('fs');
+              const pkg = JSON.parse(fs.readFileSync('${dir}package.json', 'utf8'));
+              pkg.version = '$NEW';
+              fs.writeFileSync('${dir}package.json', JSON.stringify(pkg, null, 2) + '\n');
+            "
+          done
+
+      - name: Commit and tag
+        run: |
+          git add lvthncli/package.json lvthncli/packages/*/package.json
+          git commit -m "chore(release): lvthn v${{ env.VERSION }}"
+          git tag "lvthn-v${{ env.VERSION }}"
+          git push origin main
+          git push origin "lvthn-v${{ env.VERSION }}"
+
+      - name: Install dependencies
+        working-directory: lvthncli
+        run: bun install
+
+      - name: Bundle workers
+        working-directory: lvthncli
+        run: |
+          # Bundle both workers to worker-bundle.ts files before cross-compiling
+          bun build src/serpent/worker.ts \
+            --target browser --format esm --minify \
+            --outfile /tmp/serpent-worker.js
+          echo "export const WORKER_BUNDLE = $(cat /tmp/serpent-worker.js | node -e "
+            let d=''; process.stdin.on('data',c=>d+=c);
+            process.stdin.on('end',()=>process.stdout.write(JSON.stringify(d)));
+          ");" > src/serpent/worker-bundle.ts
+
+          bun build src/chacha/worker.ts \
+            --target browser --format esm --minify \
+            --outfile /tmp/chacha-worker.js
+          echo "export const WORKER_BUNDLE = $(cat /tmp/chacha-worker.js | node -e "
+            let d=''; process.stdin.on('data',c=>d+=c);
+            process.stdin.on('end',()=>process.stdout.write(JSON.stringify(d)));
+          ");" > src/chacha/worker-bundle.ts
+
+      - name: Cross-compile all platforms
+        working-directory: lvthncli
+        run: |
+          mkdir -p \
+            packages/lvthn-linux-x64/bin \
+            packages/lvthn-linux-arm64/bin \
+            packages/lvthn-darwin-x64/bin \
+            packages/lvthn-darwin-arm64/bin \
+            packages/lvthn-win32-x64/bin
+
+          targets=(
+            "bun-linux-x64    packages/lvthn-linux-x64/bin/lvthn"
+            "bun-linux-arm64  packages/lvthn-linux-arm64/bin/lvthn"
+            "bun-darwin-x64   packages/lvthn-darwin-x64/bin/lvthn"
+            "bun-darwin-arm64 packages/lvthn-darwin-arm64/bin/lvthn"
+            "bun-windows-x64  packages/lvthn-win32-x64/bin/lvthn.exe"
+          )
+
+          for entry in "${targets[@]}"; do
+            target=$(echo $entry | awk '{print $1}')
+            outfile=$(echo $entry | awk '{print $2}')
+            echo "Compiling $target -> $outfile"
+            bun build src/main.ts \
+              --compile \
+              --target="$target" \
+              --outfile="$outfile" \
+              --minify
+          done
+
+          chmod +x \
+            packages/lvthn-linux-x64/bin/lvthn \
+            packages/lvthn-linux-arm64/bin/lvthn \
+            packages/lvthn-darwin-x64/bin/lvthn \
+            packages/lvthn-darwin-arm64/bin/lvthn
+
+          echo "Compiled binaries:"
+          ls -lh packages/*/bin/
+
+      - name: Publish platform packages
+        working-directory: lvthncli
+        run: |
+          for dir in packages/*/; do
+            echo "Publishing $dir..."
+            npm publish "$dir" --access public --provenance
+          done
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Attest binaries
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            lvthncli/packages/lvthn-linux-x64/bin/lvthn
+            lvthncli/packages/lvthn-linux-arm64/bin/lvthn
+            lvthncli/packages/lvthn-darwin-x64/bin/lvthn
+            lvthncli/packages/lvthn-darwin-arm64/bin/lvthn
+            lvthncli/packages/lvthn-win32-x64/bin/lvthn.exe
+
+      - name: Publish root package
+        working-directory: lvthncli
+        run: npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "lvthn-v${{ env.VERSION }}" \
+            --title "lvthn v${{ env.VERSION }}" \
+            --notes "lvthn v${{ env.VERSION }} -- Serpent-256 + XChaCha20-Poly1305 file encryption CLI
+
+          Install: \`bun i -g lvthn\` or \`npm i -g lvthn\`
+
+          Platforms: linux-x64, linux-arm64, darwin-x64, darwin-arm64, win32-x64" \
+            --verify-tag \
+            lvthncli/packages/lvthn-linux-x64/bin/lvthn \
+            lvthncli/packages/lvthn-linux-arm64/bin/lvthn \
+            lvthncli/packages/lvthn-darwin-x64/bin/lvthn \
+            lvthncli/packages/lvthn-darwin-arm64/bin/lvthn \
+            lvthncli/packages/lvthn-win32-x64/bin/lvthn.exe

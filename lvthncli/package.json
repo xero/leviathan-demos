@@ -1,11 +1,35 @@
 {
-  "name": "lvthncli",
+  "name": "lvthn",
   "version": "1.0.0",
-  "private": true,
+  "description": "Serpent-256 + XChaCha20-Poly1305 file encryption CLI",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xero/leviathan-demos.git",
+    "directory": "lvthncli"
+  },
+  "homepage": "https://github.com/xero/leviathan-demos/tree/main/lvthncli",
   "type": "module",
+  "bin": {
+    "lvthn": "bin/lvthn"
+  },
+  "files": [
+    "bin/lvthn"
+  ],
   "scripts": {
     "build": "bun run build.ts",
     "lint": "eslint ."
+  },
+  "optionalDependencies": {
+    "@xero/lvthn-linux-x64":   "1.0.0",
+    "@xero/lvthn-linux-arm64": "1.0.0",
+    "@xero/lvthn-darwin-x64":  "1.0.0",
+    "@xero/lvthn-darwin-arm64":"1.0.0",
+    "@xero/lvthn-win32-x64":   "1.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   },
   "dependencies": {
     "leviathan-crypto": "1.0.0"

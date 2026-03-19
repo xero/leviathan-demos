@@ -1,0 +1,14 @@
+{
+  "name": "@xero/lvthn-darwin-arm64",
+  "version": "1.0.0",
+  "description": "macOS arm64 binary for lvthn",
+  "os": ["darwin"],
+  "cpu": ["arm64"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xero/leviathan-demos.git",
+    "directory": "lvthncli/packages/lvthn-darwin-arm64"
+  },
+  "publishConfig": { "access": "public" }
+}
