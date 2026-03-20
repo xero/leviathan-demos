@@ -29,7 +29,7 @@ export async function deriveKey(
 		);
 	});
 	return {
-		key:  new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength),
+		key: new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength),
 		salt: s,
 	};
 }

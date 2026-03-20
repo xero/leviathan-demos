@@ -6,9 +6,9 @@ process.stdout.write('Bundling worker...\n');
 
 const workerBuild = await Bun.build({
 	entrypoints: ['src/worker.ts'],
-	target:      'browser',
-	format:      'esm',
-	minify:      true,
+	target: 'browser',
+	format: 'esm',
+	minify: true,
 });
 
 if (!workerBuild.success) {

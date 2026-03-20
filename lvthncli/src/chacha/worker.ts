@@ -51,9 +51,13 @@ function polyFeed(cx: ChaChaExports, data: Uint8Array): void {
 function lenBlock(aadLen: number, ctLen: number): Uint8Array {
 	const b = new Uint8Array(16);
 	let n = aadLen;
-	for (let i = 0; i < 4; i++) { b[i] = n & 0xff; n >>>= 8; }
+	for (let i = 0; i < 4; i++) {
+		b[i] = n & 0xff; n >>>= 8;
+	}
 	n = ctLen;
-	for (let i = 0; i < 4; i++) { b[8 + i] = n & 0xff; n >>>= 8; }
+	for (let i = 0; i < 4; i++) {
+		b[8 + i] = n & 0xff; n >>>= 8;
+	}
 	return b;
 }
 

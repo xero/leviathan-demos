@@ -78,7 +78,7 @@ export function decodeBlob(
 			cipher,
 			kdf,
 			flags: blob[OFF_FLAGS],
-			salt:  blob.slice(OFF_SALT, OFF_SALT + 32),
+			salt: blob.slice(OFF_SALT, OFF_SALT + 32),
 		},
 		poolOutput: blob.slice(OFF_PAYLOAD),
 	};

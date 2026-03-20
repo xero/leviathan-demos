@@ -9,9 +9,9 @@ async function bundleWorker(entry: string, out: string, label: string): Promise<
 	process.stdout.write(`Bundling ${label} worker...\n`);
 	const build = await Bun.build({
 		entrypoints: [entry],
-		target:      'browser',
-		format:      'esm',
-		minify:      true,
+		target: 'browser',
+		format: 'esm',
+		minify: true,
 	});
 	if (!build.success) {
 		process.stderr.write(`${label} worker build failed:\n`);

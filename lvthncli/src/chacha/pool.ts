@@ -12,14 +12,14 @@ import { WORKER_BUNDLE } from './worker-bundle.ts';
 const CHUNK_SIZE = 65536;
 
 function u32be(n: number): Uint8Array {
-	return new Uint8Array([(n>>>24)&0xff, (n>>>16)&0xff, (n>>>8)&0xff, n&0xff]);
+	return new Uint8Array([(n >>> 24) & 0xff, (n >>> 16) & 0xff, (n >>> 8) & 0xff, n & 0xff]);
 }
 
 function u64be(n: number): Uint8Array {
 	const hi = Math.floor(n / 0x100000000), lo = n >>> 0;
 	return new Uint8Array([
-		(hi>>>24)&0xff, (hi>>>16)&0xff, (hi>>>8)&0xff, hi&0xff,
-		(lo>>>24)&0xff, (lo>>>16)&0xff, (lo>>>8)&0xff, lo&0xff,
+		(hi >>> 24) & 0xff, (hi >>> 16) & 0xff, (hi >>> 8) & 0xff, hi & 0xff,
+		(lo >>> 24) & 0xff, (lo >>> 16) & 0xff, (lo >>> 8) & 0xff, lo & 0xff,
 	]);
 }
 
@@ -58,7 +58,9 @@ async function spawnWorker(chachaBytes: ArrayBuffer): Promise<Worker> {
 		const onMsg = (e: MessageEvent) => {
 			cleanup();
 			if (e.data.type === 'ready') resolve(worker);
-			else { worker.terminate(); reject(new Error(`worker init failed: ${e.data.message}`)); }
+			else {
+				worker.terminate(); reject(new Error(`worker init failed: ${e.data.message}`));
+			}
 		};
 		const onErr = (e: ErrorEvent) => {
 			cleanup(); worker.terminate();
@@ -117,7 +119,9 @@ export class SealPool {
 		out.set(u32be(CHUNK_SIZE), 16);
 		out.set(u64be(chunkCount), 20);
 		let pos = 28;
-		for (const c of chunks) { out.set(c, pos); pos += c.length; }
+		for (const c of chunks) {
+			out.set(c, pos); pos += c.length;
+		}
 		return out;
 	}
 
@@ -127,7 +131,7 @@ export class SealPool {
 		if (wire.length < 44) throw new RangeError('ciphertext too short');
 
 		const streamNonce = wire.slice(0, 16);  // slice not subarray — avoids 431MB clone per postMessage
-		const cs = (wire[16]<<24)|(wire[17]<<16)|(wire[18]<<8)|wire[19];
+		const cs = (wire[16] << 24) | (wire[17] << 16) | (wire[18] << 8) | wire[19];
 		let chunkCount = 0;
 		for (let i = 0; i < 8; i++) chunkCount = chunkCount * 256 + wire[20 + i];
 
@@ -146,7 +150,9 @@ export class SealPool {
 		for (const r of results) totalPt += r.length;
 		const pt = new Uint8Array(totalPt);
 		let ptPos = 0;
-		for (const r of results) { pt.set(r, ptPos); ptPos += r.length; }
+		for (const r of results) {
+			pt.set(r, ptPos); ptPos += r.length;
+		}
 		return pt;
 	}
 
@@ -193,6 +199,12 @@ export class SealPool {
 
 let _activePool: SealPool | null = null;
 
-export function registerPool(pool: SealPool): void      { _activePool = pool; }
-export function unregisterPool(): void                  { _activePool = null; }
-export function disposeActiveChaChaPool(): void         { _activePool?.dispose(); _activePool = null; }
+export function registerPool(pool: SealPool): void      {
+	_activePool = pool;
+}
+export function unregisterPool(): void                  {
+	_activePool = null;
+}
+export function disposeActiveChaChaPool(): void         {
+	_activePool?.dispose(); _activePool = null;
+}

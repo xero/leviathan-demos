@@ -38,8 +38,11 @@ export async function runDecrypt(args: ParsedArgs): Promise<void> {
 
 	let blob: Uint8Array;
 	if (isArmored(inputBytes)) {
-		try { blob = dearmor(new TextDecoder().decode(inputBytes)); }
-		catch (err) { die(`Invalid armor format: ${(err as Error).message}`, 5); }
+		try {
+			blob = dearmor(new TextDecoder().decode(inputBytes));
+		} catch (err) {
+			die(`Invalid armor format: ${(err as Error).message}`, 5);
+		}
 	} else {
 		blob = inputBytes;
 	}
@@ -107,8 +110,11 @@ async function readKeyFile(path: string): Promise<Uint8Array> {
 	if (!(await f.exists())) die(`Keyfile not found: ${path}`, 3);
 	const bytes = await f.bytes();
 	if (bytes.length > 5 && bytes[0] === 0x2d && bytes[1] === 0x2d && bytes[2] === 0x2d) {
-		try { return dearmorKey(new TextDecoder().decode(bytes)); }
-		catch (err) { die(`Invalid keyfile format: ${(err as Error).message}`, 5); }
+		try {
+			return dearmorKey(new TextDecoder().decode(bytes));
+		} catch (err) {
+			die(`Invalid keyfile format: ${(err as Error).message}`, 5);
+		}
 	}
 	return bytes;
 }

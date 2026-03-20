@@ -66,14 +66,14 @@ const CHUNK_SIZE   = 65536;
 const DOMAIN_BYTES = new TextEncoder().encode('SerpentStream-v1'); // 16 bytes
 
 function u32be(n: number): Uint8Array {
-	return new Uint8Array([(n>>>24)&0xff, (n>>>16)&0xff, (n>>>8)&0xff, n&0xff]);
+	return new Uint8Array([(n >>> 24) & 0xff, (n >>> 16) & 0xff, (n >>> 8) & 0xff, n & 0xff]);
 }
 
 function u64be(n: number): Uint8Array {
 	const hi = Math.floor(n / 0x100000000), lo = n >>> 0;
 	return new Uint8Array([
-		(hi>>>24)&0xff, (hi>>>16)&0xff, (hi>>>8)&0xff, hi&0xff,
-		(lo>>>24)&0xff, (lo>>>16)&0xff, (lo>>>8)&0xff, lo&0xff,
+		(hi >>> 24) & 0xff, (hi >>> 16) & 0xff, (hi >>> 8) & 0xff, hi & 0xff,
+		(lo >>> 24) & 0xff, (lo >>> 16) & 0xff, (lo >>> 8) & 0xff, lo & 0xff,
 	]);
 }
 
