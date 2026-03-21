@@ -56,10 +56,8 @@
 			}
 		}
 
-		footer a,
-		footer a:visited,
-		p a,
-		p a:visited {
+		a,
+		a:visited {
 			text-decoration: none;
 			color: var(--mist);
 			border-bottom: 1px solid var(--poseidon);
@@ -226,6 +224,13 @@
 				}
 			}
 		}
+
+		header, h2 {
+			a, a:visited, a:hover {
+				border: 0 !important;
+			}
+		}
+
 		pre {
 			width: fit-content;
 			max-width: var(--max-w);
@@ -251,6 +256,118 @@
 				margin-inline: 5px;
 			}
 		}
+
+		/* shiki code blocks */
+		pre.shiki {
+			width: 100%;
+			max-width: var(--max-w);
+			overflow-x: auto;
+			display: block;
+			line-height: 1.5em;
+		}
+		pre.shiki code {
+			font-family: monospace;
+			font-size: var(--text-sm);
+			background: none;
+			border: none;
+			padding: 0;
+		}
+
+		/* ascii art pre stays as-is */
+		pre:not(.shiki) {
+			font-size: var(--text-sm);
+		}
+
+		/* inline code */
+		code {
+			background: var(--depths);
+			border: 1px solid #111;
+			padding: 1px 5px;
+			font-size: 90%;
+			color: var(--mist);
+			font-family: monospace;
+		}
+
+		/* section headings */
+		article h2 {
+			color: var(--mist);
+			font-size: var(--text-xl);
+			border-bottom: 2px solid var(--poseidon);
+			padding-bottom: 4px;
+			width: 100%;
+			max-width: var(--max-w);
+			margin-top: 1rem;
+		}
+
+		article h3 {
+			color: var(--scales);
+			font-size: var(--text-lg);
+			margin-top: 0.5rem;
+		}
+
+		article p { max-width: var(--max-w); width: 100%; }
+
+		/* tables */
+		.tbl-wrap {
+			width: 100%;
+			max-width: var(--max-w);
+			overflow-x: auto;
+		}
+		table {
+			border-collapse: collapse;
+			width: 100%;
+			font-size: var(--text-sm);
+		}
+		th {
+			background: var(--poseidon);
+			color: var(--mist);
+			padding: 6px 12px;
+			text-align: left;
+			border: 1px solid #000;
+			white-space: nowrap;
+		}
+		td {
+			padding: 6px 12px;
+			border: 1px solid #111;
+			background: var(--depths);
+			vertical-align: top;
+		}
+		tr:nth-child(even) td { background: #111620; }
+		td code, th code { border: none; padding: 1px 3px; }
+
+		/* callouts */
+		.callout {
+			padding: 10px 15px;
+			margin: 4px 0;
+			border-left: 3px solid;
+			background: var(--depths);
+			font-size: var(--text-base);
+			max-width: var(--max-w);
+			width: 100%;
+			box-shadow: 2px 2px 6px rgba(0,0,0,.4);
+		}
+		.callout-important { border-color: var(--ocean); }
+		.callout-tip       { border-color: var(--scales); }
+		.callout-note      { border-color: var(--poseidon); }
+		.callout-label {
+			font-weight: bold;
+			text-transform: uppercase;
+			font-size: var(--text-sm);
+			margin-bottom: 4px;
+			letter-spacing: .05em;
+		}
+		.callout-important .callout-label { color: var(--ocean); }
+		.callout-tip .callout-label       { color: var(--scales); }
+		.callout-note .callout-label      { color: var(--mist); }
+
+		ul.attacks {
+			list-style: disc;
+			padding-left: 1.5rem;
+			max-width: var(--max-w);
+			width: 100%;
+		}
+		ul.attacks li { display: list-item; }
+		ul.attacks li em { font-style: normal; border: none; padding: 0; }
 		</style>
 	</head>
 	<body>
@@ -335,12 +452,204 @@
 				<a href="https://github.com/xero/leviathan-crypto/wiki">read the docs</a><a href="/demos">view the demos</a>
 			</nav>
 		</h2>
-		<article>
+				<article>
 			<p>Serpent-256, the most conservative AES finalist, employs 32 rounds and a maximum security margin, built to withstand future cryptanalytic advancements. Paired with the streamlined brilliance of ChaCha20-Poly1305, and complemented by SHA-2 and SHA-3. Two design philosophies, four cryptographic primitives, integrated into one coherent API.</p>
+
 			<h3>WebAssembly (WASM) serves as the correctness layer.</h3>
 			<p>It features spec-driven and vector-verified AssemblyScript implementations of Serpent-256, ChaCha20/Poly1305, SHA-2, and SHA-3. Each cryptographic primitive is compiled into its own isolated binary, executing outside the JavaScript JIT. This ensures no speculative optimization affects key material and eliminates data-dependent timing vulnerabilities from table lookups.</p>
+
 			<h3>TypeScript acts as the ergonomics layer.</h3>
-			<p>Fully typed classes, explicit init() gates, input validation, and authenticated compositions (<a href="https://github.com/xero/leviathan-crypto/wiki/serpent#serpentseal">SerpentSeal</a>, <a href="https://github.com/xero/leviathan-crypto/wiki/serpent#serpentstream">SerpentStream</a>, <a href="https://github.com/xero/leviathan-crypto/wiki/serpent#serpentstreamsealer--serpentstreamopener">SerpentStreamSealer</a>) ensure primitives are connected correctly, simplifying development and ensuring correctness. Advanced users retain the ability to directly access the raw block cipher classes.</p>
+			<p>Fully typed classes, explicit <code>init()</code> gates, input validation, and authenticated compositions (<a href="https://github.com/xero/leviathan-crypto/wiki/serpent#serpentseal">SerpentSeal</a>, <a href="https://github.com/xero/leviathan-crypto/wiki/serpent#serpentstream">SerpentStream</a>, <a href="https://github.com/xero/leviathan-crypto/wiki/serpent#serpentstreamsealer--serpentstreamopener">SerpentStreamSealer</a>) ensure primitives are connected correctly, simplifying development and ensuring correctness. Advanced users retain the ability to directly access the raw block cipher classes.</p>
+
+			<h2>Why Serpent-256</h2>
+			<p>Serpent-256, an AES finalist, received more first-place security votes than Rijndael from the NIST evaluation committee. It was designed with a larger security margin: 32 rounds compared to AES&#8217;s 10, 12, or 14.</p>
+			<p>While Serpent won on security margin, AES (Rijndael) ultimately won the competition due to its performance. Rijndael was selected because speed was paramount for the hardware and embedded targets NIST was optimizing for in 2001. However, for software running on modern hardware where milliseconds of encryption latency are acceptable, this tradeoff is no longer as relevant.</p>
+
+			<p><strong>Security Margin.</strong> Serpent has been a target of cryptanalytic research since the AES competition. The current state-of-the-art:</p>
+			<ul class="attacks">
+				<li><em>Best known reduced-round attack:</em> Multidimensional linear cryptanalysis reaches 12 of 32 rounds (Nguyen, Wu &amp; Wang, ACISP 2011), less than half the full cipher. Requires 2&#x00B9;&#x00B9;&#x2078; known plaintexts and 2&#x00B2;&#x00B2;&#x2078;&#x1D62;&#x2078; time. <a href="https://personal.ntu.edu.sg/wuhj/research/publications/2011_ACISP_MLC.pdf">source</a></li>
+				<li><em>Best known full-round attack:</em> Biclique cryptanalysis of full 32-round Serpent-256 (de Carvalho &amp; Kowada, SBSeg 2020) has time complexity 2&#x00B2;&#x2075;&#x2075;&#x22C5;&#x00B2;&#x00B9;, only 0.79 bits below the 256-bit brute-force ceiling of 2&#x00B2;&#x2075;&#x2076;. Requires 2&#x2078;&#x2078; chosen ciphertexts &#8212; strictly less practical than brute force. <a href="https://sol.sbc.org.br/index.php/sbseg/article/view/19225/19054">source</a></li>
+				<li><em>Independent research:</em> Improved the published result by &#8722;0.20 bits through systematic search. Best configuration achieves 2&#x00B2;&#x2075;&#x2075;&#x22C5;&#x00B9;&#x2079; with only 2&#x2074; chosen ciphertexts. <a href="https://github.com/xero/BicliqueFinder/blob/main/biclique-research.md">biclique_research</a></li>
+			</ul>
+			<p>See <a href="https://github.com/xero/leviathan-crypto/wiki/serpent_audit"><code>serpent_audit.md</code></a> for the full analysis.</p>
+
+			<p><strong>Implementation.</strong> Serpent&#8217;s S-boxes are implemented as Boolean gate circuits &#8212; no table lookups, no data-dependent memory access, no data-dependent branches. Every bit is processed unconditionally on every block. This provides the most timing-safe cipher implementation available in a JavaScript runtime.</p>
+			<p><strong>Key Size:</strong> The default API only supports 256-bit keys. The absence of 128 or 192-bit variants mitigates the risk of key-size downgrade attacks.</p>
+
+			<h2>Primitives</h2>
+			<div class="tbl-wrap">
+				<table>
+					<thead><tr><th>Classes</th><th>Module</th><th>Auth</th><th>Notes</th></tr></thead>
+					<tbody>
+						<tr><td><code>SerpentSeal</code></td><td><code>serpent</code>, <code>sha2</code></td><td><strong>Yes</strong></td><td>Authenticated encryption: Serpent-CBC + HMAC-SHA256. Recommended for most use cases.</td></tr>
+						<tr><td><code>SerpentStream</code>, <code>SerpentStreamPool</code></td><td><code>serpent</code>, <code>sha2</code></td><td><strong>Yes</strong></td><td>Chunked one-shot AEAD for large payloads. Pool variant parallelises across workers.</td></tr>
+						<tr><td><code>SerpentStreamSealer</code>, <code>SerpentStreamOpener</code></td><td><code>serpent</code>, <code>sha2</code></td><td><strong>Yes</strong></td><td>Incremental streaming AEAD: seal and open one chunk at a time without buffering the full message.</td></tr>
+						<tr><td><code>SerpentStreamEncoder</code>, <code>SerpentStreamDecoder</code></td><td><code>serpent</code>, <code>sha2</code></td><td><strong>Yes</strong></td><td>Length-prefixed framing over SerpentStreamSealer/Opener for flat byte streams (files, buffered TCP).</td></tr>
+						<tr><td><code>Serpent</code>, <code>SerpentCtr</code>, <code>SerpentCbc</code></td><td><code>serpent</code></td><td><strong>No</strong></td><td>Raw ECB, CTR, CBC modes. Pair with HMAC-SHA256 for authentication.</td></tr>
+						<tr><td><code>ChaCha20</code>, <code>Poly1305</code>, <code>ChaCha20Poly1305</code>, <code>XChaCha20Poly1305</code></td><td><code>chacha20</code></td><td>Yes (AEAD)</td><td>RFC 8439</td></tr>
+						<tr><td><code>SHA256</code>, <code>SHA384</code>, <code>SHA512</code>, <code>HMAC_SHA256</code>, <code>HMAC_SHA384</code>, <code>HMAC_SHA512</code></td><td><code>sha2</code></td><td>--</td><td>FIPS 180-4, RFC 2104</td></tr>
+						<tr><td><code>HKDF_SHA256</code>, <code>HKDF_SHA512</code></td><td><code>sha2</code></td><td>--</td><td>Key derivation: RFC 5869. Extract-and-expand over HMAC.</td></tr>
+						<tr><td><code>SHA3_224</code>, <code>SHA3_256</code>, <code>SHA3_384</code>, <code>SHA3_512</code>, <code>SHAKE128</code>, <code>SHAKE256</code></td><td><code>sha3</code></td><td>--</td><td>FIPS 202</td></tr>
+						<tr><td><code>Fortuna</code></td><td><code>fortuna</code></td><td>--</td><td>Fortuna CSPRNG (Ferguson &amp; Schneier). Requires <code>Fortuna.create()</code>.</td></tr>
+					</tbody>
+				</table>
+			</div>
+			<div class="callout callout-important">
+				<div class="callout-label">Important</div>
+				All cryptographic computation runs in WASM (AssemblyScript), isolated outside the JavaScript JIT.
+				The TypeScript layer provides the public API with input validation, type safety, and developer ergonomics.
+			</div>
+
+			<h2>Quick Start</h2>
+
+			<h3>Authenticated encryption with Serpent (recommended)</h3>
+			<pre class="shiki leviathan" style="background-color:#161925;color:#c0c0c0" tabindex="0"><code><span class="line"><span style="color:#1C7293">import</span><span style="color:#C6DABF"> {</span><span style="color:#C0C0C0"> init</span><span style="color:#C6DABF">,</span><span style="color:#C0C0C0"> SerpentSeal</span><span style="color:#C6DABF">,</span><span style="color:#C0C0C0"> randomBytes </span><span style="color:#C6DABF">}</span><span style="color:#1C7293"> from</span><span style="color:#C6DABF"> 'leviathan-crypto'</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#1C7293">await</span><span style="color:#1A936F"> init</span><span style="color:#C6DABF">([</span><span style="color:#C6DABF">'serpent'</span><span style="color:#C6DABF">,</span><span style="color:#C6DABF"> 'sha2'</span><span style="color:#C6DABF">])</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#1C7293">const</span><span style="color:#C0C0C0"> key </span><span style="color:#C6DABF">=</span><span style="color:#1A936F"> randomBytes</span><span style="color:#C6DABF">(</span><span style="color:#1A936F">64</span><span style="color:#C6DABF">)</span><span style="color:#114B5F;font-style:italic">  // 64-byte key (encKey + macKey)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#1C7293">const</span><span style="color:#C0C0C0"> seal </span><span style="color:#C6DABF">=</span><span style="color:#1C7293"> new</span><span style="color:#1A936F"> SerpentSeal</span><span style="color:#C6DABF">()</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#114B5F;font-style:italic">// Encrypt and authenticate</span></span>
+<span class="line"><span style="color:#1C7293">const</span><span style="color:#C0C0C0"> ciphertext </span><span style="color:#C6DABF">=</span><span style="color:#C0C0C0"> seal</span><span style="color:#C6DABF">.</span><span style="color:#1A936F">encrypt</span><span style="color:#C6DABF">(</span><span style="color:#C0C0C0">key</span><span style="color:#C6DABF">,</span><span style="color:#C0C0C0"> plaintext</span><span style="color:#C6DABF">)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#114B5F;font-style:italic">// Decrypt and verify (throws on tamper)</span></span>
+<span class="line"><span style="color:#1C7293">const</span><span style="color:#C0C0C0"> decrypted </span><span style="color:#C6DABF">=</span><span style="color:#C0C0C0"> seal</span><span style="color:#C6DABF">.</span><span style="color:#1A936F">decrypt</span><span style="color:#C6DABF">(</span><span style="color:#C0C0C0">key</span><span style="color:#C6DABF">,</span><span style="color:#C0C0C0"> ciphertext</span><span style="color:#C6DABF">)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#C0C0C0">seal</span><span style="color:#C6DABF">.</span><span style="color:#1A936F">dispose</span><span style="color:#C6DABF">()</span></span></code></pre>
+
+			<h3>Incremental streaming AEAD</h3>
+			<p>Use <code>SerpentStreamSealer</code> when data arrives chunk by chunk and you cannot buffer the full message before encrypting.</p>
+			<pre class="shiki leviathan" style="background-color:#161925;color:#c0c0c0" tabindex="0"><code><span class="line"><span style="color:#1C7293">import</span><span style="color:#C6DABF"> {</span><span style="color:#C0C0C0"> init</span><span style="color:#C6DABF">,</span><span style="color:#C0C0C0"> SerpentStreamSealer</span><span style="color:#C6DABF">,</span><span style="color:#C0C0C0"> SerpentStreamOpener</span><span style="color:#C6DABF">,</span><span style="color:#C0C0C0"> randomBytes </span><span style="color:#C6DABF">}</span><span style="color:#1C7293"> from</span><span style="color:#C6DABF"> 'leviathan-crypto'</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#1C7293">await</span><span style="color:#1A936F"> init</span><span style="color:#C6DABF">([</span><span style="color:#C6DABF">'serpent'</span><span style="color:#C6DABF">,</span><span style="color:#C6DABF"> 'sha2'</span><span style="color:#C6DABF">])</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#1C7293">const</span><span style="color:#C0C0C0"> key </span><span style="color:#C6DABF">=</span><span style="color:#1A936F"> randomBytes</span><span style="color:#C6DABF">(</span><span style="color:#1A936F">64</span><span style="color:#C6DABF">)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#114B5F;font-style:italic">// Seal side</span></span>
+<span class="line"><span style="color:#1C7293">const</span><span style="color:#C0C0C0"> sealer </span><span style="color:#C6DABF">=</span><span style="color:#1C7293"> new</span><span style="color:#1A936F"> SerpentStreamSealer</span><span style="color:#C6DABF">(</span><span style="color:#C0C0C0">key</span><span style="color:#C6DABF">,</span><span style="color:#1A936F"> 65536</span><span style="color:#C6DABF">)</span></span>
+<span class="line"><span style="color:#1C7293">const</span><span style="color:#C0C0C0"> header </span><span style="color:#C6DABF">=</span><span style="color:#C0C0C0"> sealer</span><span style="color:#C6DABF">.</span><span style="color:#1A936F">header</span><span style="color:#C6DABF">()</span><span style="color:#114B5F;font-style:italic">       // transmit to opener before any chunks</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#1C7293">const</span><span style="color:#C0C0C0"> chunk0 </span><span style="color:#C6DABF">=</span><span style="color:#C0C0C0"> sealer</span><span style="color:#C6DABF">.</span><span style="color:#1A936F">seal</span><span style="color:#C6DABF">(</span><span style="color:#C0C0C0">data0</span><span style="color:#C6DABF">)</span><span style="color:#114B5F;font-style:italic">    // exactly chunkSize bytes</span></span>
+<span class="line"><span style="color:#1C7293">const</span><span style="color:#C0C0C0"> chunk1 </span><span style="color:#C6DABF">=</span><span style="color:#C0C0C0"> sealer</span><span style="color:#C6DABF">.</span><span style="color:#1A936F">seal</span><span style="color:#C6DABF">(</span><span style="color:#C0C0C0">data1</span><span style="color:#C6DABF">)</span></span>
+<span class="line"><span style="color:#1C7293">const</span><span style="color:#C0C0C0"> last   </span><span style="color:#C6DABF">=</span><span style="color:#C0C0C0"> sealer</span><span style="color:#C6DABF">.</span><span style="color:#1A936F">final</span><span style="color:#C6DABF">(</span><span style="color:#C0C0C0">tail</span><span style="color:#C6DABF">)</span><span style="color:#114B5F;font-style:italic">    // any size up to chunkSize; wipes key on return</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#114B5F;font-style:italic">// Open side</span></span>
+<span class="line"><span style="color:#1C7293">const</span><span style="color:#C0C0C0"> opener </span><span style="color:#C6DABF">=</span><span style="color:#1C7293"> new</span><span style="color:#1A936F"> SerpentStreamOpener</span><span style="color:#C6DABF">(</span><span style="color:#C0C0C0">key</span><span style="color:#C6DABF">,</span><span style="color:#C0C0C0"> header</span><span style="color:#C6DABF">)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#1C7293">const</span><span style="color:#C0C0C0"> pt0 </span><span style="color:#C6DABF">=</span><span style="color:#C0C0C0"> opener</span><span style="color:#C6DABF">.</span><span style="color:#1A936F">open</span><span style="color:#C6DABF">(</span><span style="color:#C0C0C0">chunk0</span><span style="color:#C6DABF">)</span></span>
+<span class="line"><span style="color:#1C7293">const</span><span style="color:#C0C0C0"> pt1 </span><span style="color:#C6DABF">=</span><span style="color:#C0C0C0"> opener</span><span style="color:#C6DABF">.</span><span style="color:#1A936F">open</span><span style="color:#C6DABF">(</span><span style="color:#C0C0C0">chunk1</span><span style="color:#C6DABF">)</span></span>
+<span class="line"><span style="color:#1C7293">const</span><span style="color:#C0C0C0"> ptN </span><span style="color:#C6DABF">=</span><span style="color:#C0C0C0"> opener</span><span style="color:#C6DABF">.</span><span style="color:#1A936F">open</span><span style="color:#C6DABF">(</span><span style="color:#C0C0C0">last</span><span style="color:#C6DABF">)</span><span style="color:#114B5F;font-style:italic">        // detects final chunk; wipes key on return</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#114B5F;font-style:italic">// Reordering, truncation, and cross-stream splicing all throw on open()</span></span></code></pre>
+
+			<h3>Large payload chunking</h3>
+			<pre class="shiki leviathan" style="background-color:#161925;color:#c0c0c0" tabindex="0"><code><span class="line"><span style="color:#1C7293">import</span><span style="color:#C6DABF"> {</span><span style="color:#C0C0C0"> init</span><span style="color:#C6DABF">,</span><span style="color:#C0C0C0"> SerpentStream</span><span style="color:#C6DABF">,</span><span style="color:#C0C0C0"> randomBytes </span><span style="color:#C6DABF">}</span><span style="color:#1C7293"> from</span><span style="color:#C6DABF"> 'leviathan-crypto'</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#1C7293">await</span><span style="color:#1A936F"> init</span><span style="color:#C6DABF">([</span><span style="color:#C6DABF">'serpent'</span><span style="color:#C6DABF">,</span><span style="color:#C6DABF"> 'sha2'</span><span style="color:#C6DABF">])</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#1C7293">const</span><span style="color:#C0C0C0"> key </span><span style="color:#C6DABF">=</span><span style="color:#1A936F"> randomBytes</span><span style="color:#C6DABF">(</span><span style="color:#1A936F">32</span><span style="color:#C6DABF">)</span><span style="color:#114B5F;font-style:italic">  // 32-byte key (HKDF handles expansion internally)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#1C7293">const</span><span style="color:#C0C0C0"> stream </span><span style="color:#C6DABF">=</span><span style="color:#1C7293"> new</span><span style="color:#1A936F"> SerpentStream</span><span style="color:#C6DABF">()</span></span>
+<span class="line"><span style="color:#1C7293">const</span><span style="color:#C0C0C0"> ciphertext </span><span style="color:#C6DABF">=</span><span style="color:#C0C0C0"> stream</span><span style="color:#C6DABF">.</span><span style="color:#1A936F">seal</span><span style="color:#C6DABF">(</span><span style="color:#C0C0C0">key</span><span style="color:#C6DABF">,</span><span style="color:#C0C0C0"> largePlaintext</span><span style="color:#C6DABF">)</span><span style="color:#114B5F;font-style:italic">   // default 64KB chunks</span></span>
+<span class="line"><span style="color:#1C7293">const</span><span style="color:#C0C0C0"> decrypted  </span><span style="color:#C6DABF">=</span><span style="color:#C0C0C0"> stream</span><span style="color:#C6DABF">.</span><span style="color:#1A936F">open</span><span style="color:#C6DABF">(</span><span style="color:#C0C0C0">key</span><span style="color:#C6DABF">,</span><span style="color:#C0C0C0"> ciphertext</span><span style="color:#C6DABF">)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#C0C0C0">stream</span><span style="color:#C6DABF">.</span><span style="color:#1A936F">dispose</span><span style="color:#C6DABF">()</span></span></code></pre>
+
+			<h3>Fortuna CSPRNG</h3>
+			<pre class="shiki leviathan" style="background-color:#161925;color:#c0c0c0" tabindex="0"><code><span class="line"><span style="color:#1C7293">import</span><span style="color:#C6DABF"> {</span><span style="color:#C0C0C0"> init</span><span style="color:#C6DABF">,</span><span style="color:#C0C0C0"> Fortuna </span><span style="color:#C6DABF">}</span><span style="color:#1C7293"> from</span><span style="color:#C6DABF"> 'leviathan-crypto'</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#1C7293">await</span><span style="color:#1A936F"> init</span><span style="color:#C6DABF">([</span><span style="color:#C6DABF">'serpent'</span><span style="color:#C6DABF">,</span><span style="color:#C6DABF"> 'sha2'</span><span style="color:#C6DABF">])</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#1C7293">const</span><span style="color:#C0C0C0"> fortuna </span><span style="color:#C6DABF">=</span><span style="color:#1C7293"> await</span><span style="color:#C0C0C0"> Fortuna</span><span style="color:#C6DABF">.</span><span style="color:#1A936F">create</span><span style="color:#C6DABF">()</span></span>
+<span class="line"><span style="color:#1C7293">const</span><span style="color:#C0C0C0"> random </span><span style="color:#C6DABF">=</span><span style="color:#C0C0C0"> fortuna</span><span style="color:#C6DABF">.</span><span style="color:#1A936F">get</span><span style="color:#C6DABF">(</span><span style="color:#1A936F">32</span><span style="color:#C6DABF">)</span><span style="color:#114B5F;font-style:italic">  // 32 random bytes</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#C0C0C0">fortuna</span><span style="color:#C6DABF">.</span><span style="color:#1A936F">stop</span><span style="color:#C6DABF">()</span></span></code></pre>
+
+			<h3>Hashing with SHA-3</h3>
+			<pre class="shiki leviathan" style="background-color:#161925;color:#c0c0c0" tabindex="0"><code><span class="line"><span style="color:#1C7293">import</span><span style="color:#C6DABF"> {</span><span style="color:#C0C0C0"> init</span><span style="color:#C6DABF">,</span><span style="color:#C0C0C0"> SHA3_256 </span><span style="color:#C6DABF">}</span><span style="color:#1C7293"> from</span><span style="color:#C6DABF"> 'leviathan-crypto'</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#1C7293">await</span><span style="color:#1A936F"> init</span><span style="color:#C6DABF">([</span><span style="color:#C6DABF">'sha3'</span><span style="color:#C6DABF">])</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#1C7293">const</span><span style="color:#C0C0C0"> hasher </span><span style="color:#C6DABF">=</span><span style="color:#1C7293"> new</span><span style="color:#1A936F"> SHA3_256</span><span style="color:#C6DABF">()</span></span>
+<span class="line"><span style="color:#1C7293">const</span><span style="color:#C0C0C0"> digest </span><span style="color:#C6DABF">=</span><span style="color:#C0C0C0"> hasher</span><span style="color:#C6DABF">.</span><span style="color:#1A936F">hash</span><span style="color:#C6DABF">(</span><span style="color:#1C7293">new</span><span style="color:#1A936F"> TextEncoder</span><span style="color:#C6DABF">().</span><span style="color:#1A936F">encode</span><span style="color:#C6DABF">(</span><span style="color:#C6DABF">'hello'</span><span style="color:#C6DABF">))</span></span>
+<span class="line"><span style="color:#114B5F;font-style:italic">// digest is a 32-byte Uint8Array</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#C0C0C0">hasher</span><span style="color:#C6DABF">.</span><span style="color:#1A936F">dispose</span><span style="color:#C6DABF">()</span></span></code></pre>
+
+			<h2>Utilities</h2>
+			<p>These helpers are available immediately on import: no <code>init()</code> required.</p>
+			<div class="tbl-wrap">
+				<table>
+					<thead><tr><th>Function</th><th>Description</th></tr></thead>
+					<tbody>
+						<tr><td><code>hexToBytes(hex)</code></td><td>Hex string to <code>Uint8Array</code> (accepts uppercase, <code>0x</code> prefix)</td></tr>
+						<tr><td><code>bytesToHex(bytes)</code></td><td><code>Uint8Array</code> to lowercase hex string</td></tr>
+						<tr><td><code>utf8ToBytes(str)</code></td><td>UTF-8 string to <code>Uint8Array</code></td></tr>
+						<tr><td><code>bytesToUtf8(bytes)</code></td><td><code>Uint8Array</code> to UTF-8 string</td></tr>
+						<tr><td><code>base64ToBytes(b64)</code></td><td>Base64/base64url string to <code>Uint8Array</code> (undefined on invalid)</td></tr>
+						<tr><td><code>bytesToBase64(bytes, url?)</code></td><td><code>Uint8Array</code> to base64 string (url=true for base64url)</td></tr>
+						<tr><td><code>constantTimeEqual(a, b)</code></td><td>Constant-time byte comparison (XOR-accumulate)</td></tr>
+						<tr><td><code>wipe(data)</code></td><td>Zero a typed array in place</td></tr>
+						<tr><td><code>xor(a, b)</code></td><td>XOR two equal-length <code>Uint8Array</code>s</td></tr>
+						<tr><td><code>concat(a, b)</code></td><td>Concatenate two <code>Uint8Array</code>s</td></tr>
+						<tr><td><code>randomBytes(n)</code></td><td>Cryptographically secure random bytes via Web Crypto</td></tr>
+					</tbody>
+				</table>
+			</div>
+
+			<h2>Authentication Warning</h2>
+			<p><code>SerpentCtr</code> and <code>SerpentCbc</code> are <strong>unauthenticated</strong> cipher modes. They provide confidentiality but not integrity or authenticity. An attacker can modify ciphertext without detection.</p>
+			<div class="callout callout-tip">
+				<div class="callout-label">Tip</div>
+				<p><strong>For authenticated Serpent encryption:</strong> use <a href="https://github.com/xero/leviathan-crypto/wiki/serpent#serpentseal"><code>SerpentSeal</code></a> or <a href="https://github.com/xero/leviathan-crypto/wiki/serpent#serpentstreamsealer--serpentstreamopener"><code>SerpentStreamSealer</code></a></p>
+				<p><strong>Using Serpent CBC/CTR directly:</strong> pair with <code>HMAC_SHA256</code> using the Encrypt-then-MAC pattern.</p>
+			</div>
+			<div class="callout callout-note">
+				<div class="callout-label">Note</div>
+				<p><a href="https://github.com/xero/leviathan-crypto/wiki/serpent#serpentstream"><code>SerpentStream</code></a> and <a href="https://github.com/xero/leviathan-crypto/wiki/serpent#serpentstreamsealer--serpentstreamopener"><code>SerpentStreamSealer</code></a> inherently satisfy the Cryptographic Doom Principle. MAC verification is the mandatory check on every <code>open()</code> call; decryption is impossible until verification succeeds. Per-chunk HKDF key derivation, using position-bound info, extends this protection to stream integrity. Reordering, truncation, and cross-stream substitution are all detected at the MAC layer. <a href="https://github.com/xero/leviathan-crypto/wiki/serpent_audit#24-serpentstream-encrypt-then-mac-and-the-cryptographic-doom-principle">Full analysis.</a></p>
+			</div>
+
+			<h2>Installation</h2>
+			<pre class="shiki leviathan" style="background-color:#161925;color:#c0c0c0" tabindex="0"><code><span class="line"><span style="color:#114B5F;font-style:italic"># use bun</span></span>
+<span class="line"><span style="color:#1A936F">bun</span><span style="color:#C6DABF"> i</span><span style="color:#C6DABF"> leviathan-crypto</span></span>
+<span class="line"><span style="color:#114B5F;font-style:italic"># or npm</span></span>
+<span class="line"><span style="color:#1A936F">npm</span><span style="color:#C6DABF"> install</span><span style="color:#C6DABF"> leviathan-crypto</span></span></code></pre>
+
+			<h2>Loading Modes</h2>
+			<pre class="shiki leviathan" style="background-color:#161925;color:#c0c0c0" tabindex="0"><code><span class="line"><span style="color:#114B5F;font-style:italic">// Embedded (default): zero-config, base64-encoded WASM inline</span></span>
+<span class="line"><span style="color:#1C7293">await</span><span style="color:#1A936F"> init</span><span style="color:#C6DABF">([</span><span style="color:#C6DABF">'serpent'</span><span style="color:#C6DABF">,</span><span style="color:#C6DABF"> 'sha3'</span><span style="color:#C6DABF">])</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#114B5F;font-style:italic">// Streaming: uses instantiateStreaming for performance</span></span>
+<span class="line"><span style="color:#1C7293">await</span><span style="color:#1A936F"> init</span><span style="color:#C6DABF">([</span><span style="color:#C6DABF">'serpent'</span><span style="color:#C6DABF">],</span><span style="color:#C6DABF"> 'streaming'</span><span style="color:#C6DABF">,</span><span style="color:#C6DABF"> {</span><span style="color:#C0C0C0"> wasmUrl</span><span style="color:#C6DABF">:</span><span style="color:#C6DABF"> '/assets/wasm/'</span><span style="color:#C6DABF"> })</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#114B5F;font-style:italic">// Manual: provide your own binary</span></span>
+<span class="line"><span style="color:#1C7293">await</span><span style="color:#1A936F"> init</span><span style="color:#C6DABF">([</span><span style="color:#C6DABF">'serpent'</span><span style="color:#C6DABF">],</span><span style="color:#C6DABF"> 'manual'</span><span style="color:#C6DABF">,</span><span style="color:#C6DABF"> {</span><span style="color:#C0C0C0"> wasmBinary</span><span style="color:#C6DABF">:</span><span style="color:#C6DABF"> {</span><span style="color:#C0C0C0"> serpent</span><span style="color:#C6DABF">:</span><span style="color:#C0C0C0"> myBuffer </span><span style="color:#C6DABF">}</span><span style="color:#C6DABF"> })</span></span></code></pre>
+
+			<h2>Documentation</h2>
+			<p>Full API documentation: <a href="https://github.com/xero/leviathan-crypto/blob/main/docs/README.md">./docs</a></p>
+			<div class="tbl-wrap">
+				<table>
+					<thead><tr><th>Module</th><th>Description</th></tr></thead>
+					<tbody>
+						<tr><td><a href="https://github.com/xero/leviathan-crypto/blob/main/docs/serpent.md">serpent.md</a></td><td>Serpent-256 TypeScript API (<code>SerpentSeal</code>, <code>SerpentStream</code>, <code>SerpentStreamPool</code>, <code>SerpentStreamSealer</code>, <code>SerpentStreamOpener</code>, <code>Serpent</code>, <code>SerpentCtr</code>, <code>SerpentCbc</code>)</td></tr>
+						<tr><td><a href="https://github.com/xero/leviathan-crypto/blob/main/docs/asm_serpent.md">asm_serpent.md</a></td><td>Serpent-256 WASM implementation (bitslice S-boxes, key schedule, CTR/CBC)</td></tr>
+						<tr><td><a href="https://github.com/xero/leviathan-crypto/blob/main/docs/chacha20.md">chacha20.md</a></td><td>ChaCha20/Poly1305 TypeScript API (<code>ChaCha20</code>, <code>Poly1305</code>, <code>ChaCha20Poly1305</code>, <code>XChaCha20Poly1305</code>)</td></tr>
+						<tr><td><a href="https://github.com/xero/leviathan-crypto/blob/main/docs/asm_chacha.md">asm_chacha.md</a></td><td>ChaCha20/Poly1305 WASM implementation (quarter-round, HChaCha20)</td></tr>
+						<tr><td><a href="https://github.com/xero/leviathan-crypto/blob/main/docs/sha2.md">sha2.md</a></td><td>SHA-2 TypeScript API (<code>SHA256</code>, <code>SHA512</code>, <code>SHA384</code>, <code>HMAC_SHA256</code>, <code>HMAC_SHA512</code>, <code>HMAC_SHA384</code>)</td></tr>
+						<tr><td><a href="https://github.com/xero/leviathan-crypto/blob/main/docs/asm_sha2.md">asm_sha2.md</a></td><td>SHA-2 WASM implementation (compression functions, HMAC)</td></tr>
+						<tr><td><a href="https://github.com/xero/leviathan-crypto/blob/main/docs/sha3.md">sha3.md</a></td><td>SHA-3 TypeScript API (<code>SHA3_224</code>, <code>SHA3_256</code>, <code>SHA3_384</code>, <code>SHA3_512</code>, <code>SHAKE128</code>, <code>SHAKE256</code>)</td></tr>
+						<tr><td><a href="https://github.com/xero/leviathan-crypto/blob/main/docs/asm_sha3.md">asm_sha3.md</a></td><td>SHA-3 WASM implementation (Keccak-f[1600], sponge construction)</td></tr>
+						<tr><td><a href="https://github.com/xero/leviathan-crypto/blob/main/docs/fortuna.md">fortuna.md</a></td><td>Fortuna CSPRNG (forward secrecy, 32 entropy pools)</td></tr>
+						<tr><td><a href="https://github.com/xero/leviathan-crypto/blob/main/docs/init.md">init.md</a></td><td><code>init()</code> API and WASM loading modes</td></tr>
+						<tr><td><a href="https://github.com/xero/leviathan-crypto/blob/main/docs/utils.md">utils.md</a></td><td>Encoding helpers, <code>constantTimeEqual</code>, <code>wipe</code>, <code>randomBytes</code></td></tr>
+						<tr><td><a href="https://github.com/xero/leviathan-crypto/blob/main/docs/types.md">types.md</a></td><td>TypeScript interfaces (<code>Hash</code>, <code>KeyedHash</code>, <code>Blockcipher</code>, <code>Streamcipher</code>, <code>AEAD</code>)</td></tr>
+						<tr><td><a href="https://github.com/xero/leviathan-crypto/blob/main/docs/architecture.md">architecture.md</a></td><td>Architecture overview, build pipeline, module relationships</td></tr>
+						<tr><td><a href="https://github.com/xero/leviathan-crypto/blob/main/test-suite.md">test-suite.md</a></td><td>Test suite structure, vector corpus, gate discipline</td></tr>
+					</tbody>
+				</table>
+			</div>
 		</article>
 			<pre>
   ██     ▐█████ ██     ▐█▌  ▄█▌   ███▌ ▀███████▀▄██▌  ▐█▌  ███▌    ██▌   ▓▓
