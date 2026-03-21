@@ -1,0 +1,104 @@
+{
+	"name": "leviathan",
+	"type": "dark",
+	"colors": {
+		"editor.background": "#161925",
+		"editor.foreground": "#c0c0c0"
+	},
+	"tokenColors": [
+		{
+			"name": "Default text",
+			"scope": ["source"],
+			"settings": { "foreground": "#c0c0c0" }
+		},
+		{
+			"name": "Comments",
+			"scope": ["comment", "punctuation.definition.comment"],
+			"settings": { "foreground": "#114b5f", "fontStyle": "italic" }
+		},
+		{
+			"name": "Keywords & control flow",
+			"scope": [
+				"keyword",
+				"keyword.control",
+				"keyword.operator.new",
+				"keyword.operator.typeof",
+				"keyword.operator.void",
+				"storage.type",
+				"storage.modifier"
+			],
+			"settings": { "foreground": "#1c7293" }
+		},
+		{
+			"name": "Strings",
+			"scope": [
+				"string",
+				"string.quoted",
+				"string.template",
+				"punctuation.definition.string"
+			],
+			"settings": { "foreground": "#c6dabf" }
+		},
+		{
+			"name": "Functions & class names",
+			"scope": [
+				"entity.name.function",
+				"entity.name.class",
+				"entity.name.type.class",
+				"support.function",
+				"meta.function-call entity.name.function"
+			],
+			"settings": { "foreground": "#1a936f" }
+		},
+		{
+			"name": "Types, interfaces, generics",
+			"scope": [
+				"entity.name.type",
+				"entity.name.type.interface",
+				"support.type",
+				"meta.type.annotation",
+				"meta.type.parameters"
+			],
+			"settings": { "foreground": "#c6dabf" }
+		},
+		{
+			"name": "Numbers & booleans",
+			"scope": [
+				"constant.numeric",
+				"constant.language.boolean",
+				"constant.language.null",
+				"constant.language.undefined",
+				"constant.language"
+			],
+			"settings": { "foreground": "#1a936f" }
+		},
+		{
+			"name": "Punctuation & operators",
+			"scope": [
+				"punctuation",
+				"keyword.operator",
+				"meta.brace",
+				"meta.delimiter"
+			],
+			"settings": { "foreground": "#c6dabf" }
+		},
+		{
+			"name": "Variables & parameters",
+			"scope": [
+				"variable",
+				"variable.parameter",
+				"variable.other"
+			],
+			"settings": { "foreground": "#c0c0c0" }
+		},
+		{
+			"name": "Imports & module names",
+			"scope": [
+				"variable.other.constant",
+				"support.module",
+				"entity.name.module"
+			],
+			"settings": { "foreground": "#c0c0c0" }
+		}
+	]
+}

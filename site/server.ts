@@ -2,7 +2,6 @@
 //
 // Routes:
 //   GET  /        → library landing page
-//   GET  /demos   → demos landing page
 //   GET  /web     → lvthn-web (Serpent-256 encryption tool)
 //   GET  /chat    → lvthn-chat client
 //   GET  /relay   → WebSocket relay for lvthn-chat
@@ -62,7 +61,7 @@ Bun.serve<WsData>({
 		// Static routes — paths are relative to this file (site/)
 		const routes: Record<string, string> = {
 			'/': './index.html',
-			'/demos': './demos.html',
+			'/demos': './index.html',
 			'/web': './lvthn.html',
 			'/chat': './lvthn-chat.html',
 		};

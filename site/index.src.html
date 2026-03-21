@@ -535,79 +535,89 @@
 			<h3>Quick Start</h3>
 
 			<h4>Authenticated encryption with Serpent (recommended)</h4>
-<pre class="shiki leviathan" style="background-color:#161925;color:#c0c0c0" tabindex="0"><code><span class="line"><span style="color:#1C7293">import</span><span style="color:#C6DABF"> {</span><span style="color:#C0C0C0"> init</span><span style="color:#C6DABF">,</span><span style="color:#C0C0C0"> SerpentSeal</span><span style="color:#C6DABF">,</span><span style="color:#C0C0C0"> randomBytes </span><span style="color:#C6DABF">}</span><span style="color:#1C7293"> from</span><span style="color:#C6DABF"> 'leviathan-crypto'</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#1C7293">await</span><span style="color:#1A936F"> init</span><span style="color:#C6DABF">([</span><span style="color:#C6DABF">'serpent'</span><span style="color:#C6DABF">,</span><span style="color:#C6DABF"> 'sha2'</span><span style="color:#C6DABF">])</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#1C7293">const</span><span style="color:#C0C0C0"> key </span><span style="color:#C6DABF">=</span><span style="color:#1A936F"> randomBytes</span><span style="color:#C6DABF">(</span><span style="color:#1A936F">64</span><span style="color:#C6DABF">)</span><span style="color:#114B5F;font-style:italic">  // 64-byte key (encKey + macKey)</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#1C7293">const</span><span style="color:#C0C0C0"> seal </span><span style="color:#C6DABF">=</span><span style="color:#1C7293"> new</span><span style="color:#1A936F"> SerpentSeal</span><span style="color:#C6DABF">()</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#114B5F;font-style:italic">// Encrypt and authenticate</span></span>
-<span class="line"><span style="color:#1C7293">const</span><span style="color:#C0C0C0"> ciphertext </span><span style="color:#C6DABF">=</span><span style="color:#C0C0C0"> seal</span><span style="color:#C6DABF">.</span><span style="color:#1A936F">encrypt</span><span style="color:#C6DABF">(</span><span style="color:#C0C0C0">key</span><span style="color:#C6DABF">,</span><span style="color:#C0C0C0"> plaintext</span><span style="color:#C6DABF">)</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#114B5F;font-style:italic">// Decrypt and verify (throws on tamper)</span></span>
-<span class="line"><span style="color:#1C7293">const</span><span style="color:#C0C0C0"> decrypted </span><span style="color:#C6DABF">=</span><span style="color:#C0C0C0"> seal</span><span style="color:#C6DABF">.</span><span style="color:#1A936F">decrypt</span><span style="color:#C6DABF">(</span><span style="color:#C0C0C0">key</span><span style="color:#C6DABF">,</span><span style="color:#C0C0C0"> ciphertext</span><span style="color:#C6DABF">)</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#C0C0C0">seal</span><span style="color:#C6DABF">.</span><span style="color:#1A936F">dispose</span><span style="color:#C6DABF">()</span></span></code></pre>
+<pre><code class="language-typescript">
+import { init, SerpentSeal, randomBytes } from 'leviathan-crypto'
+
+await init(['serpent', 'sha2'])
+
+const key = randomBytes(64)  // 64-byte key (encKey + macKey)
+
+const seal = new SerpentSeal()
+
+// Encrypt and authenticate
+const ciphertext = seal.encrypt(key, plaintext)
+
+// Decrypt and verify (throws on tamper)
+const decrypted = seal.decrypt(key, ciphertext)
+
+seal.dispose()
+</code></pre>
 
 			<h4>Incremental streaming AEAD</h4>
 			<p>Use <code>SerpentStreamSealer</code> when data arrives chunk by chunk and you cannot buffer the full message before encrypting.</p>
-<pre class="shiki leviathan" style="background-color:#161925;color:#c0c0c0" tabindex="0"><code><span class="line"><span style="color:#1C7293">import</span><span style="color:#C6DABF"> {</span><span style="color:#C0C0C0"> init</span><span style="color:#C6DABF">,</span><span style="color:#C0C0C0"> SerpentStreamSealer</span><span style="color:#C6DABF">,</span><span style="color:#C0C0C0"> SerpentStreamOpener</span><span style="color:#C6DABF">,</span><span style="color:#C0C0C0"> randomBytes </span><span style="color:#C6DABF">}</span><span style="color:#1C7293"> from</span><span style="color:#C6DABF"> 'leviathan-crypto'</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#1C7293">await</span><span style="color:#1A936F"> init</span><span style="color:#C6DABF">([</span><span style="color:#C6DABF">'serpent'</span><span style="color:#C6DABF">,</span><span style="color:#C6DABF"> 'sha2'</span><span style="color:#C6DABF">])</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#1C7293">const</span><span style="color:#C0C0C0"> key </span><span style="color:#C6DABF">=</span><span style="color:#1A936F"> randomBytes</span><span style="color:#C6DABF">(</span><span style="color:#1A936F">64</span><span style="color:#C6DABF">)</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#114B5F;font-style:italic">// Seal side</span></span>
-<span class="line"><span style="color:#1C7293">const</span><span style="color:#C0C0C0"> sealer </span><span style="color:#C6DABF">=</span><span style="color:#1C7293"> new</span><span style="color:#1A936F"> SerpentStreamSealer</span><span style="color:#C6DABF">(</span><span style="color:#C0C0C0">key</span><span style="color:#C6DABF">,</span><span style="color:#1A936F"> 65536</span><span style="color:#C6DABF">)</span></span>
-<span class="line"><span style="color:#1C7293">const</span><span style="color:#C0C0C0"> header </span><span style="color:#C6DABF">=</span><span style="color:#C0C0C0"> sealer</span><span style="color:#C6DABF">.</span><span style="color:#1A936F">header</span><span style="color:#C6DABF">()</span><span style="color:#114B5F;font-style:italic">       // transmit to opener before any chunks</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#1C7293">const</span><span style="color:#C0C0C0"> chunk0 </span><span style="color:#C6DABF">=</span><span style="color:#C0C0C0"> sealer</span><span style="color:#C6DABF">.</span><span style="color:#1A936F">seal</span><span style="color:#C6DABF">(</span><span style="color:#C0C0C0">data0</span><span style="color:#C6DABF">)</span><span style="color:#114B5F;font-style:italic">    // exactly chunkSize bytes</span></span>
-<span class="line"><span style="color:#1C7293">const</span><span style="color:#C0C0C0"> chunk1 </span><span style="color:#C6DABF">=</span><span style="color:#C0C0C0"> sealer</span><span style="color:#C6DABF">.</span><span style="color:#1A936F">seal</span><span style="color:#C6DABF">(</span><span style="color:#C0C0C0">data1</span><span style="color:#C6DABF">)</span></span>
-<span class="line"><span style="color:#1C7293">const</span><span style="color:#C0C0C0"> last   </span><span style="color:#C6DABF">=</span><span style="color:#C0C0C0"> sealer</span><span style="color:#C6DABF">.</span><span style="color:#1A936F">final</span><span style="color:#C6DABF">(</span><span style="color:#C0C0C0">tail</span><span style="color:#C6DABF">)</span><span style="color:#114B5F;font-style:italic">    // any size up to chunkSize; wipes key on return</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#114B5F;font-style:italic">// Open side</span></span>
-<span class="line"><span style="color:#1C7293">const</span><span style="color:#C0C0C0"> opener </span><span style="color:#C6DABF">=</span><span style="color:#1C7293"> new</span><span style="color:#1A936F"> SerpentStreamOpener</span><span style="color:#C6DABF">(</span><span style="color:#C0C0C0">key</span><span style="color:#C6DABF">,</span><span style="color:#C0C0C0"> header</span><span style="color:#C6DABF">)</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#1C7293">const</span><span style="color:#C0C0C0"> pt0 </span><span style="color:#C6DABF">=</span><span style="color:#C0C0C0"> opener</span><span style="color:#C6DABF">.</span><span style="color:#1A936F">open</span><span style="color:#C6DABF">(</span><span style="color:#C0C0C0">chunk0</span><span style="color:#C6DABF">)</span></span>
-<span class="line"><span style="color:#1C7293">const</span><span style="color:#C0C0C0"> pt1 </span><span style="color:#C6DABF">=</span><span style="color:#C0C0C0"> opener</span><span style="color:#C6DABF">.</span><span style="color:#1A936F">open</span><span style="color:#C6DABF">(</span><span style="color:#C0C0C0">chunk1</span><span style="color:#C6DABF">)</span></span>
-<span class="line"><span style="color:#1C7293">const</span><span style="color:#C0C0C0"> ptN </span><span style="color:#C6DABF">=</span><span style="color:#C0C0C0"> opener</span><span style="color:#C6DABF">.</span><span style="color:#1A936F">open</span><span style="color:#C6DABF">(</span><span style="color:#C0C0C0">last</span><span style="color:#C6DABF">)</span><span style="color:#114B5F;font-style:italic">        // detects final chunk; wipes key on return</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#114B5F;font-style:italic">// Reordering, truncation, and cross-stream splicing all throw on open()</span></span></code></pre>
+<pre><code class="language-typescript">
+import { init, SerpentStreamSealer, SerpentStreamOpener, randomBytes } from 'leviathan-crypto'
+
+await init(['serpent', 'sha2'])
+
+const key = randomBytes(64)
+
+// Seal side
+const sealer = new SerpentStreamSealer(key, 65536)
+const header = sealer.header()       // transmit to opener before any chunks
+
+const chunk0 = sealer.seal(data0)    // exactly chunkSize bytes
+const chunk1 = sealer.seal(data1)
+const last   = sealer.final(tail)    // any size up to chunkSize; wipes key on return
+
+// Open side
+const opener = new SerpentStreamOpener(key, header)
+
+const pt0 = opener.open(chunk0)
+const pt1 = opener.open(chunk1)
+const ptN = opener.open(last)        // detects final chunk; wipes key on return
+
+// Reordering, truncation, and cross-stream splicing all throw on open()
+</code></pre>
 			<h4>Large payload chunking</h4>
-			<pre class="shiki leviathan" style="background-color:#161925;color:#c0c0c0" tabindex="0"><code><span class="line"><span style="color:#1C7293">import</span><span style="color:#C6DABF"> {</span><span style="color:#C0C0C0"> init</span><span style="color:#C6DABF">,</span><span style="color:#C0C0C0"> SerpentStream</span><span style="color:#C6DABF">,</span><span style="color:#C0C0C0"> randomBytes </span><span style="color:#C6DABF">}</span><span style="color:#1C7293"> from</span><span style="color:#C6DABF"> 'leviathan-crypto'</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#1C7293">await</span><span style="color:#1A936F"> init</span><span style="color:#C6DABF">([</span><span style="color:#C6DABF">'serpent'</span><span style="color:#C6DABF">,</span><span style="color:#C6DABF"> 'sha2'</span><span style="color:#C6DABF">])</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#1C7293">const</span><span style="color:#C0C0C0"> key </span><span style="color:#C6DABF">=</span><span style="color:#1A936F"> randomBytes</span><span style="color:#C6DABF">(</span><span style="color:#1A936F">32</span><span style="color:#C6DABF">)</span><span style="color:#114B5F;font-style:italic">  // 32-byte key (HKDF handles expansion internally)</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#1C7293">const</span><span style="color:#C0C0C0"> stream </span><span style="color:#C6DABF">=</span><span style="color:#1C7293"> new</span><span style="color:#1A936F"> SerpentStream</span><span style="color:#C6DABF">()</span></span>
-<span class="line"><span style="color:#1C7293">const</span><span style="color:#C0C0C0"> ciphertext </span><span style="color:#C6DABF">=</span><span style="color:#C0C0C0"> stream</span><span style="color:#C6DABF">.</span><span style="color:#1A936F">seal</span><span style="color:#C6DABF">(</span><span style="color:#C0C0C0">key</span><span style="color:#C6DABF">,</span><span style="color:#C0C0C0"> largePlaintext</span><span style="color:#C6DABF">)</span><span style="color:#114B5F;font-style:italic">   // default 64KB chunks</span></span>
-<span class="line"><span style="color:#1C7293">const</span><span style="color:#C0C0C0"> decrypted  </span><span style="color:#C6DABF">=</span><span style="color:#C0C0C0"> stream</span><span style="color:#C6DABF">.</span><span style="color:#1A936F">open</span><span style="color:#C6DABF">(</span><span style="color:#C0C0C0">key</span><span style="color:#C6DABF">,</span><span style="color:#C0C0C0"> ciphertext</span><span style="color:#C6DABF">)</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#C0C0C0">stream</span><span style="color:#C6DABF">.</span><span style="color:#1A936F">dispose</span><span style="color:#C6DABF">()</span></span></code></pre>
+			<pre><code class="language-typescript">
+import { init, SerpentStream, randomBytes } from 'leviathan-crypto'
+
+await init(['serpent', 'sha2'])
+
+const key = randomBytes(32)  // 32-byte key (HKDF handles expansion internally)
+
+const stream = new SerpentStream()
+const ciphertext = stream.seal(key, largePlaintext)   // default 64KB chunks
+const decrypted  = stream.open(key, ciphertext)
+
+stream.dispose()
+			</code></pre>
 
 			<h4>Fortuna CSPRNG</h4>
 
-			<pre class="shiki leviathan" style="background-color:#161925;color:#c0c0c0" tabindex="0"><code><span class="line"><span style="color:#1C7293">import</span><span style="color:#C6DABF"> {</span><span style="color:#C0C0C0"> init</span><span style="color:#C6DABF">,</span><span style="color:#C0C0C0"> Fortuna </span><span style="color:#C6DABF">}</span><span style="color:#1C7293"> from</span><span style="color:#C6DABF"> 'leviathan-crypto'</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#1C7293">await</span><span style="color:#1A936F"> init</span><span style="color:#C6DABF">([</span><span style="color:#C6DABF">'serpent'</span><span style="color:#C6DABF">,</span><span style="color:#C6DABF"> 'sha2'</span><span style="color:#C6DABF">])</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#1C7293">const</span><span style="color:#C0C0C0"> fortuna </span><span style="color:#C6DABF">=</span><span style="color:#1C7293"> await</span><span style="color:#C0C0C0"> Fortuna</span><span style="color:#C6DABF">.</span><span style="color:#1A936F">create</span><span style="color:#C6DABF">()</span></span>
-<span class="line"><span style="color:#1C7293">const</span><span style="color:#C0C0C0"> random </span><span style="color:#C6DABF">=</span><span style="color:#C0C0C0"> fortuna</span><span style="color:#C6DABF">.</span><span style="color:#1A936F">get</span><span style="color:#C6DABF">(</span><span style="color:#1A936F">32</span><span style="color:#C6DABF">)</span><span style="color:#114B5F;font-style:italic">  // 32 random bytes</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#C0C0C0">fortuna</span><span style="color:#C6DABF">.</span><span style="color:#1A936F">stop</span><span style="color:#C6DABF">()</span></span></code></pre>
+			<pre><code class="language-typescript">
+import { init, Fortuna } from 'leviathan-crypto'
+
+await init(['serpent', 'sha2'])
+
+const fortuna = await Fortuna.create()
+const random = fortuna.get(32)  // 32 random bytes
+
+fortuna.stop()
+			</code></pre>
 			<h4>Hashing with SHA-3</h4>
-			<pre class="shiki leviathan" style="background-color:#161925;color:#c0c0c0" tabindex="0"><code><span class="line"><span style="color:#1C7293">import</span><span style="color:#C6DABF"> {</span><span style="color:#C0C0C0"> init</span><span style="color:#C6DABF">,</span><span style="color:#C0C0C0"> SHA3_256 </span><span style="color:#C6DABF">}</span><span style="color:#1C7293"> from</span><span style="color:#C6DABF"> 'leviathan-crypto'</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#1C7293">await</span><span style="color:#1A936F"> init</span><span style="color:#C6DABF">([</span><span style="color:#C6DABF">'sha3'</span><span style="color:#C6DABF">])</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#1C7293">const</span><span style="color:#C0C0C0"> hasher </span><span style="color:#C6DABF">=</span><span style="color:#1C7293"> new</span><span style="color:#1A936F"> SHA3_256</span><span style="color:#C6DABF">()</span></span>
-<span class="line"><span style="color:#1C7293">const</span><span style="color:#C0C0C0"> digest </span><span style="color:#C6DABF">=</span><span style="color:#C0C0C0"> hasher</span><span style="color:#C6DABF">.</span><span style="color:#1A936F">hash</span><span style="color:#C6DABF">(</span><span style="color:#1C7293">new</span><span style="color:#1A936F"> TextEncoder</span><span style="color:#C6DABF">().</span><span style="color:#1A936F">encode</span><span style="color:#C6DABF">(</span><span style="color:#C6DABF">'hello'</span><span style="color:#C6DABF">))</span></span>
-<span class="line"><span style="color:#114B5F;font-style:italic">// digest is a 32-byte Uint8Array</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#C0C0C0">hasher</span><span style="color:#C6DABF">.</span><span style="color:#1A936F">dispose</span><span style="color:#C6DABF">()</span></span></code></pre>
+			<pre><code class="language-typescript">
+import { init, SHA3_256 } from 'leviathan-crypto'
+
+await init(['sha3'])
+
+const hasher = new SHA3_256()
+const digest = hasher.hash(new TextEncoder().encode('hello'))
+// digest is a 32-byte Uint8Array
+
+hasher.dispose()
+			</code></pre>
 
 			<h3>Utilities</h3>
 			<p>These helpers are available immediately on import: no <code>init()</code> required.</p>
@@ -643,21 +653,25 @@
 			</div>
 
 			<h3>Installation</h3>
-			<pre class="shiki leviathan" style="background-color:#161925;color:#c0c0c0" tabindex="0"><code><span class="line"><span style="color:#114B5F;font-style:italic"># use bun</span></span>
-<span class="line"><span style="color:#1A936F">bun</span><span style="color:#C6DABF"> i</span><span style="color:#C6DABF"> leviathan-crypto</span></span>
-<span class="line"><span style="color:#114B5F;font-style:italic"># or npm</span></span>
-<span class="line"><span style="color:#1A936F">npm</span><span style="color:#C6DABF"> install</span><span style="color:#C6DABF"> leviathan-crypto</span></span></code></pre>
+			<pre><code class="language-bash">
+# use bun
+bun i leviathan-crypto
+# or npm
+npm install leviathan-crypto
+			</code></pre>
 
 
 			<h3>Loading Modes</h3>
-			<pre class="shiki leviathan" style="background-color:#161925;color:#c0c0c0" tabindex="0"><code><span class="line"><span style="color:#114B5F;font-style:italic">// Embedded (default): zero-config, base64-encoded WASM inline</span></span>
-<span class="line"><span style="color:#1C7293">await</span><span style="color:#1A936F"> init</span><span style="color:#C6DABF">([</span><span style="color:#C6DABF">'serpent'</span><span style="color:#C6DABF">,</span><span style="color:#C6DABF"> 'sha3'</span><span style="color:#C6DABF">])</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#114B5F;font-style:italic">// Streaming: uses instantiateStreaming for performance</span></span>
-<span class="line"><span style="color:#1C7293">await</span><span style="color:#1A936F"> init</span><span style="color:#C6DABF">([</span><span style="color:#C6DABF">'serpent'</span><span style="color:#C6DABF">],</span><span style="color:#C6DABF"> 'streaming'</span><span style="color:#C6DABF">,</span><span style="color:#C6DABF"> {</span><span style="color:#C0C0C0"> wasmUrl</span><span style="color:#C6DABF">:</span><span style="color:#C6DABF"> '/assets/wasm/'</span><span style="color:#C6DABF"> })</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#114B5F;font-style:italic">// Manual: provide your own binary</span></span>
-<span class="line"><span style="color:#1C7293">await</span><span style="color:#1A936F"> init</span><span style="color:#C6DABF">([</span><span style="color:#C6DABF">'serpent'</span><span style="color:#C6DABF">],</span><span style="color:#C6DABF"> 'manual'</span><span style="color:#C6DABF">,</span><span style="color:#C6DABF"> {</span><span style="color:#C0C0C0"> wasmBinary</span><span style="color:#C6DABF">:</span><span style="color:#C6DABF"> {</span><span style="color:#C0C0C0"> serpent</span><span style="color:#C6DABF">:</span><span style="color:#C0C0C0"> myBuffer </span><span style="color:#C6DABF">}</span><span style="color:#C6DABF"> })</span></span></code></pre>
+			<pre><code class="language-typescript">
+// Embedded (default): zero-config, base64-encoded WASM inline
+await init(['serpent', 'sha3'])
+
+// Streaming: uses instantiateStreaming for performance
+await init(['serpent'], 'streaming', { wasmUrl: '/assets/wasm/' })
+
+// Manual: provide your own binary
+await init(['serpent'], 'manual', { wasmBinary: { serpent: myBuffer } })
+			</code></pre>
 
 			<h3>Documentation</h3>
 			<p>Full API documentation: <a href="https://github.com/xero/leviathan-crypto/blob/main/docs/README.md">./docs</a></p>
