@@ -36,6 +36,7 @@
 			--text: #c0c0c0;
 			--ico: #444;
 			--bdr: 4px solid #000;
+			--max-w: 900px;
 		}
 
 		html,
@@ -53,6 +54,23 @@
 				margin: var(--space);
 				padding: var(--space);
 			}
+		}
+
+		footer a,
+		footer a:visited,
+		p a,
+		p a:visited {
+			text-decoration: none;
+			color: var(--mist);
+			border-bottom: 1px solid var(--poseidon);
+			&:hover {
+				color: var(--text);
+				border-bottom: 1px solid var(--ocean);
+			}
+		}
+
+		a {
+			text-decoration: none;
 		}
 
 		main {
@@ -162,23 +180,75 @@
 			margin: 0;
 		}
 
-		h2 {
+		article {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			width: 100%;
+			padding: clamp(1rem, 4vw, 3rem);
+			gap: var(--gap);
+			margin: auto;
+			font-size: var(--text-lg);
+
+			@media (width >= 40em) {
+				align-items: flex-start;
+				max-width: var(--max-w);
+			}
+
+			h3 {
+				color: var(--scales);
+			}
+		}
+
+		h2 nav {
 			width: fit-content;
-			max-width: 100%;
+			max-width: var(--max-w);
 			display: flex;
 			flex-wrap: wrap;
 			justify-content: center;
-			margin: clamp(1rem, 4vw, 2rem) auto;
-			font-size: var(--text-xl);
+			margin: 0 auto;
 			line-height: 2em;
-
+			background: var(--depths);
+			border: 2px solid #000;
+			box-shadow: 2px 2px 6px rgba(0, 0, 0, .5);
+			padding: clamp(0.5rem, 2vw, 1rem);
+			color: var(--mist);
+			& > :first-child {
+				border-right: 2px solid #000;
+			}
 			a {
-				font-size: var(--text-2xl);
-				color: var(--poseidon);
-
+				font-size: var(--text-xl);
+				color: var(--ocean);
+				padding-inline: 20px;
 				&:hover {
 					color: var(--mist);
+					background: var(--bg);
 				}
+			}
+		}
+		pre {
+			width: fit-content;
+			max-width: var(--max-w);
+			display: flex;
+			margin: 0 auto;
+			background: var(--depths);
+			border: 2px solid #000;
+			box-shadow: 2px 2px 6px rgba(0, 0, 0, .5);
+			padding: clamp(0.5rem, 2vw, 2rem);
+			line-height: 1em;
+			color: var(--text);
+		}
+
+		footer {
+			padding: clamp(0.5rem, 2vw, 2rem);
+			width: 100%;
+			max-width: var(--max-w);
+			display: flex;
+			margin: 0 auto;
+			font-size: var(--text-base);
+			color: var(--text);
+			a {
+				margin-inline: 5px;
 			}
 		}
 		</style>
@@ -260,6 +330,51 @@
 				</section>
 			</header>
 		</main>
-		<h2><a href="https://github.com/xero/leviathan-crypto/wiki">docs</a> &nbsp;&amp;&nbsp; <a href="/demos">demos</a></h2>
+		<h2>
+			<nav>
+				<a href="https://github.com/xero/leviathan-crypto/wiki">read the docs</a><a href="/demos">view the demos</a>
+			</nav>
+		</h2>
+		<article>
+			<p>Serpent-256, the most conservative AES finalist, employs 32 rounds and a maximum security margin, built to withstand future cryptanalytic advancements. Paired with the streamlined brilliance of ChaCha20-Poly1305, and complemented by SHA-2 and SHA-3. Two design philosophies, four cryptographic primitives, integrated into one coherent API.</p>
+			<h3>WebAssembly (WASM) serves as the correctness layer.</h3>
+			<p>It features spec-driven and vector-verified AssemblyScript implementations of Serpent-256, ChaCha20/Poly1305, SHA-2, and SHA-3. Each cryptographic primitive is compiled into its own isolated binary, executing outside the JavaScript JIT. This ensures no speculative optimization affects key material and eliminates data-dependent timing vulnerabilities from table lookups.</p>
+			<h3>TypeScript acts as the ergonomics layer.</h3>
+			<p>Fully typed classes, explicit init() gates, input validation, and authenticated compositions (<a href="https://github.com/xero/leviathan-crypto/wiki/serpent#serpentseal">SerpentSeal</a>, <a href="https://github.com/xero/leviathan-crypto/wiki/serpent#serpentstream">SerpentStream</a>, <a href="https://github.com/xero/leviathan-crypto/wiki/serpent#serpentstreamsealer--serpentstreamopener">SerpentStreamSealer</a>) ensure primitives are connected correctly, simplifying development and ensuring correctness. Advanced users retain the ability to directly access the raw block cipher classes.</p>
+		</article>
+			<pre>
+  ██     ▐█████ ██     ▐█▌  ▄█▌   ███▌ ▀███████▀▄██▌  ▐█▌  ███▌    ██▌   ▓▓
+ ▐█▌     ▐█▌    ▓█     ▐█▌  ▓██  ▐█▌██    ▐█▌   ███   ██▌ ▐█▌██    ▓██   ██
+ ██▌     ░███   ▐█▌    ██   ▀▀   ██ ▐█▌   ██   ▐██▌   █▓  ▓█ ▐█▌  ▐███▌  █▓
+ ██      ██     ▐█▌    █▓  ▐██  ▐█▌  █▓   ██   ▐██▄▄ ▐█▌ ▐█▌  ██  ▐█▌██ ▐█▌
+▐█▌     ▐█▌      ██   ▐█▌  ██   ██   ██  ▐█▌   ██▀▀████▌ ██   ██  ██ ▐█▌▐█▌
+▐▒▌     ▐▒▌      ▐▒▌  ██   ▒█   ██▀▀▀██▌ ▐▒▌   ▒█    █▓░ ▒█▀▀▀██▌ ▒█  ██▐█
+█▓ ▄▄▓█ █▓ ▄▄▓█   ▓▓ ▐▓▌  ▐▓▌  ▐█▌   ▐▒▌ █▓   ▐▓▌   ▐▓█ ▐▓▌   ▐▒▌▐▓▌  ▐███
+▓██▀▀   ▓██▀▀      ▓█▓█   ▐█▌  ▐█▌   ▐▓▌ ▓█   ▐█▌   ▐█▓ ▐█▌   ▐▓▌▐█▌   ██▓
+                    ▓█         ▄▄▄▄▄▄▄▄▄▄            ▀▀        ▐█▌▌▌
+                        ▄████████████████████▄▄
+                     ▄██████████████████████ ▀████▄
+                   ▄█████████▀▀▀     ▀███████▄▄███████▌
+                  ▐████████▀   ▄▄▄▄     ▀████████▀██▀█▌
+                  ████████      ███▀▀     ████▀  █▀ █▀
+                  ███████▌    ▀██▀         ██
+                   ███████   ▀███           ▀██ ▀█▄
+                    ▀██████   ▄▄██            ▀▀  ██▄
+                      ▀█████▄   ▄██▄             ▄▀▄▀
+                         ▀████▄   ▄██▄
+                           ▐████   ▐███
+                    ▄▄██████████    ▐███         ▄▄
+                 ▄██▀▀▀▀▀▀▀▀▀▀     ▄████      ▄██▀
+               ▄▀  ▄▄█████████▄▄  ▀▀▀▀▀     ▄███
+                ▄██████▀▀▀▀▀▀██████▄ ▀▄▄▄▄████▀
+               ████▀    ▄▄▄▄▄▄▄ ▀████▄ ▀█████▀  ▄▄▄▄
+               █████▄▄█████▀▀▀▀▀▀▄ ▀███▄      ▄███▀
+               ▀██████▀             ▀████▄▄▄████▀
+                                       ▀█████▀
+
+       Serpent256 & Xchacha20-Poly1305 Cryptography for the Web</pre>
+		<footer>
+			MMXXVI <a href="https://x-e.ro">xero</a> / <a href="https://github.com/xero/leviathan-crypto">leviathan crypto library</a>
+		</footer>
 	</body>
 </html>
