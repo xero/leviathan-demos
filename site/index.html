@@ -144,6 +144,14 @@
 
 			h2 {
 				margin-bottom: 15px;
+
+				a,
+				a:visited {
+					border: 0;
+					color: var(--ocean);
+					font-size: var(--text-2xl);
+					line-height: 0.1em;
+				}
 			}
 			blockquote {
 				padding: 0 10px 10px 10px;
@@ -446,11 +454,11 @@
 					<header>
 						<nav>
 							<section>
-								<h2>Demos</h2>
-								<ul>
-									<li><a href="/web">lvthn-web</a> browser file encryption</li>
+								<h2>Demos <a href="https://github.com/xero/leviathan-demos">↗</a></h2>
+									<ul>
+									<li><a href="/web">lvthn-web</a> <p>offline browser based</p><p>key/pass file encryption</p></li>
 									<li><a href="/chat">lvthn-chat</a> end-to-end encrypted chat</li>
-									<li><a href="https://www.npmjs.com/package/lvthn">lvthn CLI</a> <p>install with <kbd>bun i -g lvthn</kbd></p></li>
+									<li><a href="https://www.npmjs.com/package/lvthn">lvthn CLI</a> <p>command line encryption tool</p><p>install with <kbd>bun i -g lvthn</kbd></p></li>
 								</ul>
 							</section>
 						</nav>
@@ -505,6 +513,47 @@
 				All cryptographic computation runs in WASM (AssemblyScript), isolated outside the JavaScript JIT.
 				The TypeScript layer provides the public API with input validation, type safety, and developer ergonomics.
 			</div>
+
+			<h3>Documentation</h3>
+			<div class="tbl-wrap">
+				<p> Vist <a href="https://github.com/xero/leviathan-crypto/wiki">the wiki</a> for full API documentation</p>
+				<table>
+					<thead><tr><th>Module</th><th>Description</th></tr></thead>
+					<tbody>
+						<tr><td><a href="https://github.com/xero/leviathan-crypto/wiki/serpent">serpent</a></td><td>Serpent-256 TypeScript API (<code>SerpentSeal</code>, <code>SerpentStream</code>, <code>SerpentStreamPool</code>, <code>SerpentStreamSealer</code>, <code>SerpentStreamOpener</code>, <code>Serpent</code>, <code>SerpentCtr</code>, <code>SerpentCbc</code>)</td></tr>
+						<tr><td><a href="https://github.com/xero/leviathan-crypto/wiki/asm_serpent">asm_serpent</a></td><td>Serpent-256 WASM implementation (bitslice S-boxes, key schedule, CTR/CBC)</td></tr>
+						<tr><td><a href="https://github.com/xero/leviathan-crypto/wiki/chacha20">chacha20</a></td><td>ChaCha20/Poly1305 TypeScript API (<code>ChaCha20</code>, <code>Poly1305</code>, <code>ChaCha20Poly1305</code>, <code>XChaCha20Poly1305</code>)</td></tr>
+						<tr><td><a href="https://github.com/xero/leviathan-crypto/wiki/asm_chacha">asm_chacha</a></td><td>ChaCha20/Poly1305 WASM implementation (quarter-round, HChaCha20)</td></tr>
+						<tr><td><a href="https://github.com/xero/leviathan-crypto/wiki/sha2">sha2</a></td><td>SHA-2 TypeScript API (<code>SHA256</code>, <code>SHA512</code>, <code>SHA384</code>, <code>HMAC_SHA256</code>, <code>HMAC_SHA512</code>, <code>HMAC_SHA384</code>)</td></tr>
+						<tr><td><a href="https://github.com/xero/leviathan-crypto/wiki/asm_sha2">asm_sha2</a></td><td>SHA-2 WASM implementation (compression functions, HMAC)</td></tr>
+						<tr><td><a href="https://github.com/xero/leviathan-crypto/wiki/sha3">sha3</a></td><td>SHA-3 TypeScript API (<code>SHA3_224</code>, <code>SHA3_256</code>, <code>SHA3_384</code>, <code>SHA3_512</code>, <code>SHAKE128</code>, <code>SHAKE256</code>)</td></tr>
+						<tr><td><a href="https://github.com/xero/leviathan-crypto/wiki/asm_sha3">asm_sha3</a></td><td>SHA-3 WASM implementation (Keccak-f[1600], sponge construction)</td></tr>
+						<tr><td><a href="https://github.com/xero/leviathan-crypto/wiki/fortuna">fortuna</a></td><td>Fortuna CSPRNG (forward secrecy, 32 entropy pools)</td></tr>
+						<tr><td><a href="https://github.com/xero/leviathan-crypto/wiki/init">init</a></td><td><code>init()</code> API and WASM loading modes</td></tr>
+						<tr><td><a href="https://github.com/xero/leviathan-crypto/wiki/utils">utils</a></td><td>Encoding helpers, <code>constantTimeEqual</code>, <code>wipe</code>, <code>randomBytes</code></td></tr>
+						<tr><td><a href="https://github.com/xero/leviathan-crypto/wiki/types">types</a></td><td>TypeScript interfaces (<code>Hash</code>, <code>KeyedHash</code>, <code>Blockcipher</code>, <code>Streamcipher</code>, <code>AEAD</code>)</td></tr>
+						<tr><td><a href="https://github.com/xero/leviathan-crypto/wiki/architecture">architecture</a></td><td>Architecture overview, build pipeline, module relationships</td></tr>
+						<tr><td><a href="https://github.com/xero/leviathan-crypto/wiki/test-suite">test-suite</a></td><td>Test suite structure, vector corpus, gate discipline</td></tr>
+					</tbody>
+				</table>
+			</div>
+
+			<h3>Installation</h3>
+			<pre class="shiki leviathan" style="background-color:#161925;color:#c0c0c0" tabindex="0"><code><span class="line"><span style="color:#114B5F;font-style:italic"># use bun</span></span>
+<span class="line"><span style="color:#1A936F">bun</span><span style="color:#C6DABF"> i</span><span style="color:#C6DABF"> leviathan-crypto</span></span>
+<span class="line"><span style="color:#114B5F;font-style:italic"># or npm</span></span>
+<span class="line"><span style="color:#1A936F">npm</span><span style="color:#C6DABF"> install</span><span style="color:#C6DABF"> leviathan-crypto</span></span></code></pre>
+
+			<h3>Loading Modes</h3>
+			<p>Their are three loading types: zero config, streaming, and full manual configuration.</p>
+			<pre class="shiki leviathan" style="background-color:#161925;color:#c0c0c0" tabindex="0"><code><span class="line"><span style="color:#114B5F;font-style:italic">// Embedded (default): zero-config, base64-encoded WASM inline</span></span>
+<span class="line"><span style="color:#1C7293">await</span><span style="color:#1A936F"> init</span><span style="color:#C6DABF">([</span><span style="color:#C6DABF">'serpent'</span><span style="color:#C6DABF">,</span><span style="color:#C6DABF"> 'sha3'</span><span style="color:#C6DABF">]);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#114B5F;font-style:italic">// Streaming: uses instantiateStreaming for performance</span></span>
+<span class="line"><span style="color:#1C7293">await</span><span style="color:#1A936F"> init</span><span style="color:#C6DABF">([</span><span style="color:#C6DABF">'serpent'</span><span style="color:#C6DABF">],</span><span style="color:#C6DABF"> 'streaming'</span><span style="color:#C6DABF">,</span><span style="color:#C6DABF"> {</span><span style="color:#C0C0C0"> wasmUrl</span><span style="color:#C6DABF">:</span><span style="color:#C6DABF"> '/assets/wasm/'</span><span style="color:#C6DABF"> });</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#114B5F;font-style:italic">// Manual: provide your own binary</span></span>
+<span class="line"><span style="color:#1C7293">await</span><span style="color:#1A936F"> init</span><span style="color:#C6DABF">([</span><span style="color:#C6DABF">'serpent'</span><span style="color:#C6DABF">],</span><span style="color:#C6DABF"> 'manual'</span><span style="color:#C6DABF">,</span><span style="color:#C6DABF"> {</span><span style="color:#C0C0C0"> wasmBinary</span><span style="color:#C6DABF">:</span><span style="color:#C6DABF"> {</span><span style="color:#C0C0C0"> serpent</span><span style="color:#C6DABF">:</span><span style="color:#C0C0C0"> myBuffer </span><span style="color:#C6DABF">}</span><span style="color:#C6DABF"> });</span></span></code></pre>
 
 			<h3>Quick Start</h3>
 
@@ -615,48 +664,8 @@
 				<div class="callout-label">Note</div>
 				<p><a href="https://github.com/xero/leviathan-crypto/wiki/serpent#serpentstream"><code>SerpentStream</code></a> and <a href="https://github.com/xero/leviathan-crypto/wiki/serpent#serpentstreamsealer--serpentstreamopener"><code>SerpentStreamSealer</code></a> inherently satisfy the Cryptographic Doom Principle. MAC verification is the mandatory check on every <code>open()</code> call; decryption is impossible until verification succeeds. Per-chunk HKDF key derivation, using position-bound info, extends this protection to stream integrity. Reordering, truncation, and cross-stream substitution are all detected at the MAC layer. <a href="https://github.com/xero/leviathan-crypto/wiki/serpent_audit#24-serpentstream-encrypt-then-mac-and-the-cryptographic-doom-principle">Full analysis.</a></p>
 			</div>
-
-			<h3>Installation</h3>
-			<pre class="shiki leviathan" style="background-color:#161925;color:#c0c0c0" tabindex="0"><code><span class="line"><span style="color:#114B5F;font-style:italic"># use bun</span></span>
-<span class="line"><span style="color:#1A936F">bun</span><span style="color:#C6DABF"> i</span><span style="color:#C6DABF"> leviathan-crypto</span></span>
-<span class="line"><span style="color:#114B5F;font-style:italic"># or npm</span></span>
-<span class="line"><span style="color:#1A936F">npm</span><span style="color:#C6DABF"> install</span><span style="color:#C6DABF"> leviathan-crypto</span></span></code></pre>
-
-
-			<h3>Loading Modes</h3>
-			<pre class="shiki leviathan" style="background-color:#161925;color:#c0c0c0" tabindex="0"><code><span class="line"><span style="color:#114B5F;font-style:italic">// Embedded (default): zero-config, base64-encoded WASM inline</span></span>
-<span class="line"><span style="color:#1C7293">await</span><span style="color:#1A936F"> init</span><span style="color:#C6DABF">([</span><span style="color:#C6DABF">'serpent'</span><span style="color:#C6DABF">,</span><span style="color:#C6DABF"> 'sha3'</span><span style="color:#C6DABF">]);</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#114B5F;font-style:italic">// Streaming: uses instantiateStreaming for performance</span></span>
-<span class="line"><span style="color:#1C7293">await</span><span style="color:#1A936F"> init</span><span style="color:#C6DABF">([</span><span style="color:#C6DABF">'serpent'</span><span style="color:#C6DABF">],</span><span style="color:#C6DABF"> 'streaming'</span><span style="color:#C6DABF">,</span><span style="color:#C6DABF"> {</span><span style="color:#C0C0C0"> wasmUrl</span><span style="color:#C6DABF">:</span><span style="color:#C6DABF"> '/assets/wasm/'</span><span style="color:#C6DABF"> });</span></span>
-<span class="line"></span>
-<span class="line"><span style="color:#114B5F;font-style:italic">// Manual: provide your own binary</span></span>
-<span class="line"><span style="color:#1C7293">await</span><span style="color:#1A936F"> init</span><span style="color:#C6DABF">([</span><span style="color:#C6DABF">'serpent'</span><span style="color:#C6DABF">],</span><span style="color:#C6DABF"> 'manual'</span><span style="color:#C6DABF">,</span><span style="color:#C6DABF"> {</span><span style="color:#C0C0C0"> wasmBinary</span><span style="color:#C6DABF">:</span><span style="color:#C6DABF"> {</span><span style="color:#C0C0C0"> serpent</span><span style="color:#C6DABF">:</span><span style="color:#C0C0C0"> myBuffer </span><span style="color:#C6DABF">}</span><span style="color:#C6DABF"> });</span></span></code></pre>
-
-			<h3>Documentation</h3>
-			<p>Full API documentation: <a href="https://github.com/xero/leviathan-crypto/blob/main/docs/README.md">./docs</a></p>
-			<div class="tbl-wrap">
-				<table>
-					<thead><tr><th>Module</th><th>Description</th></tr></thead>
-					<tbody>
-						<tr><td><a href="https://github.com/xero/leviathan-crypto/blob/main/docs/serpent.md">serpent.md</a></td><td>Serpent-256 TypeScript API (<code>SerpentSeal</code>, <code>SerpentStream</code>, <code>SerpentStreamPool</code>, <code>SerpentStreamSealer</code>, <code>SerpentStreamOpener</code>, <code>Serpent</code>, <code>SerpentCtr</code>, <code>SerpentCbc</code>)</td></tr>
-						<tr><td><a href="https://github.com/xero/leviathan-crypto/blob/main/docs/asm_serpent.md">asm_serpent.md</a></td><td>Serpent-256 WASM implementation (bitslice S-boxes, key schedule, CTR/CBC)</td></tr>
-						<tr><td><a href="https://github.com/xero/leviathan-crypto/blob/main/docs/chacha20.md">chacha20.md</a></td><td>ChaCha20/Poly1305 TypeScript API (<code>ChaCha20</code>, <code>Poly1305</code>, <code>ChaCha20Poly1305</code>, <code>XChaCha20Poly1305</code>)</td></tr>
-						<tr><td><a href="https://github.com/xero/leviathan-crypto/blob/main/docs/asm_chacha.md">asm_chacha.md</a></td><td>ChaCha20/Poly1305 WASM implementation (quarter-round, HChaCha20)</td></tr>
-						<tr><td><a href="https://github.com/xero/leviathan-crypto/blob/main/docs/sha2.md">sha2.md</a></td><td>SHA-2 TypeScript API (<code>SHA256</code>, <code>SHA512</code>, <code>SHA384</code>, <code>HMAC_SHA256</code>, <code>HMAC_SHA512</code>, <code>HMAC_SHA384</code>)</td></tr>
-						<tr><td><a href="https://github.com/xero/leviathan-crypto/blob/main/docs/asm_sha2.md">asm_sha2.md</a></td><td>SHA-2 WASM implementation (compression functions, HMAC)</td></tr>
-						<tr><td><a href="https://github.com/xero/leviathan-crypto/blob/main/docs/sha3.md">sha3.md</a></td><td>SHA-3 TypeScript API (<code>SHA3_224</code>, <code>SHA3_256</code>, <code>SHA3_384</code>, <code>SHA3_512</code>, <code>SHAKE128</code>, <code>SHAKE256</code>)</td></tr>
-						<tr><td><a href="https://github.com/xero/leviathan-crypto/blob/main/docs/asm_sha3.md">asm_sha3.md</a></td><td>SHA-3 WASM implementation (Keccak-f[1600], sponge construction)</td></tr>
-						<tr><td><a href="https://github.com/xero/leviathan-crypto/blob/main/docs/fortuna.md">fortuna.md</a></td><td>Fortuna CSPRNG (forward secrecy, 32 entropy pools)</td></tr>
-						<tr><td><a href="https://github.com/xero/leviathan-crypto/blob/main/docs/init.md">init.md</a></td><td><code>init()</code> API and WASM loading modes</td></tr>
-						<tr><td><a href="https://github.com/xero/leviathan-crypto/blob/main/docs/utils.md">utils.md</a></td><td>Encoding helpers, <code>constantTimeEqual</code>, <code>wipe</code>, <code>randomBytes</code></td></tr>
-						<tr><td><a href="https://github.com/xero/leviathan-crypto/blob/main/docs/types.md">types.md</a></td><td>TypeScript interfaces (<code>Hash</code>, <code>KeyedHash</code>, <code>Blockcipher</code>, <code>Streamcipher</code>, <code>AEAD</code>)</td></tr>
-						<tr><td><a href="https://github.com/xero/leviathan-crypto/blob/main/docs/architecture.md">architecture.md</a></td><td>Architecture overview, build pipeline, module relationships</td></tr>
-						<tr><td><a href="https://github.com/xero/leviathan-crypto/blob/main/test-suite.md">test-suite.md</a></td><td>Test suite structure, vector corpus, gate discipline</td></tr>
-					</tbody>
-				</table>
-			</div>
 		</article>
+
 			<pre>
   ██     ▐█████ ██     ▐█▌  ▄█▌   ███▌ ▀███████▀▄██▌  ▐█▌  ███▌    ██▌   ▓▓
  ▐█▌     ▐█▌    ▓█     ▐█▌  ▓██  ▐█▌██    ▐█▌   ███   ██▌ ▐█▌██    ▓██   ██
