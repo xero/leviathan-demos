@@ -111,6 +111,10 @@
 			box-shadow: 2px 2px 6px rgba(0, 0, 0, .5);
 			padding: clamp(0.5rem, 2vw, 1rem);
 
+			&.banner {
+				padding-bottom: clamp(0.2rem, 1vw, 0.1rem);
+			}
+
 			@media (width >= 40em) {
 				margin-right: auto;
 			}
@@ -393,7 +397,7 @@
 	<body>
 		<main>
 			<article>
-				<header>
+				<header class="banner">
 					<section>
 						<h1>leviathan-crypto<b>@</b><i>0.0.0</i></h1>
 						<blockquote>
