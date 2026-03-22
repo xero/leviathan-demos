@@ -284,7 +284,7 @@
 			max-width: var(--max-w);
 			overflow-x: auto;
 			display: block;
-			line-height: 1.5em;
+			line-height: 1.15em;
 		}
 		pre.shiki code {
 			font-family: monospace;
@@ -510,87 +510,87 @@
 
 			<h4>Authenticated encryption with Serpent (recommended)</h4>
 <pre><code class="language-typescript">
-import { init, SerpentSeal, randomBytes } from 'leviathan-crypto'
+import { init, SerpentSeal, randomBytes } from 'leviathan-crypto';
 
-await init(['serpent', 'sha2'])
+await init(['serpent', 'sha2']);
 
-const key = randomBytes(64)  // 64-byte key (encKey + macKey)
+const key = randomBytes(64);  // 64-byte key (encKey + macKey)
 
-const seal = new SerpentSeal()
+const seal = new SerpentSeal();
 
 // Encrypt and authenticate
-const ciphertext = seal.encrypt(key, plaintext)
+const ciphertext = seal.encrypt(key, plaintext);
 
 // Decrypt and verify (throws on tamper)
-const decrypted = seal.decrypt(key, ciphertext)
+const decrypted = seal.decrypt(key, ciphertext);
 
-seal.dispose()
+seal.dispose();
 </code></pre>
 
 			<h4>Incremental streaming AEAD</h4>
 			<p>Use <code>SerpentStreamSealer</code> when data arrives chunk by chunk and you cannot buffer the full message before encrypting.</p>
 <pre><code class="language-typescript">
-import { init, SerpentStreamSealer, SerpentStreamOpener, randomBytes } from 'leviathan-crypto'
+import { init, SerpentStreamSealer, SerpentStreamOpener, randomBytes } from 'leviathan-crypto';
 
-await init(['serpent', 'sha2'])
+await init(['serpent', 'sha2']);
 
-const key = randomBytes(64)
+const key = randomBytes(64);
 
 // Seal side
-const sealer = new SerpentStreamSealer(key, 65536)
-const header = sealer.header()       // transmit to opener before any chunks
+const sealer = new SerpentStreamSealer(key, 65536);
+const header = sealer.header();       // transmit to opener before any chunks
 
-const chunk0 = sealer.seal(data0)    // exactly chunkSize bytes
-const chunk1 = sealer.seal(data1)
-const last   = sealer.final(tail)    // any size up to chunkSize; wipes key on return
+const chunk0 = sealer.seal(data0);    // exactly chunkSize bytes
+const chunk1 = sealer.seal(data1);
+const last   = sealer.final(tail);    // any size up to chunkSize; wipes key on return
 
 // Open side
-const opener = new SerpentStreamOpener(key, header)
+const opener = new SerpentStreamOpener(key, header);
 
-const pt0 = opener.open(chunk0)
-const pt1 = opener.open(chunk1)
-const ptN = opener.open(last)        // detects final chunk; wipes key on return
+const pt0 = opener.open(chunk0);
+const pt1 = opener.open(chunk1);
+const ptN = opener.open(last);        // detects final chunk; wipes key on return
 
 // Reordering, truncation, and cross-stream splicing all throw on open()
 </code></pre>
 			<h4>Large payload chunking</h4>
 			<pre><code class="language-typescript">
-import { init, SerpentStream, randomBytes } from 'leviathan-crypto'
+import { init, SerpentStream, randomBytes } from 'leviathan-crypto';
 
-await init(['serpent', 'sha2'])
+await init(['serpent', 'sha2']);
 
-const key = randomBytes(32)  // 32-byte key (HKDF handles expansion internally)
+const key = randomBytes(32);  // 32-byte key (HKDF handles expansion internally)
 
-const stream = new SerpentStream()
-const ciphertext = stream.seal(key, largePlaintext)   // default 64KB chunks
-const decrypted  = stream.open(key, ciphertext)
+const stream = new SerpentStream();
+const ciphertext = stream.seal(key, largePlaintext);   // default 64KB chunks
+const decrypted  = stream.open(key, ciphertext);
 
-stream.dispose()
+stream.dispose();
 			</code></pre>
 
 			<h4>Fortuna CSPRNG</h4>
 
 			<pre><code class="language-typescript">
-import { init, Fortuna } from 'leviathan-crypto'
+import { init, Fortuna } from 'leviathan-crypto';
 
-await init(['serpent', 'sha2'])
+await init(['serpent', 'sha2']);
 
-const fortuna = await Fortuna.create()
-const random = fortuna.get(32)  // 32 random bytes
+const fortuna = await Fortuna.create();
+const random = fortuna.get(32);  // 32 random bytes
 
 fortuna.stop()
 			</code></pre>
 			<h4>Hashing with SHA-3</h4>
 			<pre><code class="language-typescript">
-import { init, SHA3_256 } from 'leviathan-crypto'
+import { init, SHA3_256 } from 'leviathan-crypto';
 
-await init(['sha3'])
+await init(['sha3']);
 
-const hasher = new SHA3_256()
-const digest = hasher.hash(new TextEncoder().encode('hello'))
+const hasher = new SHA3_256();
+const digest = hasher.hash(new TextEncoder().encode('hello'));
 // digest is a 32-byte Uint8Array
 
-hasher.dispose()
+hasher.dispose();
 			</code></pre>
 
 			<h3>Utilities</h3>
@@ -638,13 +638,13 @@ npm install leviathan-crypto
 			<h3>Loading Modes</h3>
 			<pre><code class="language-typescript">
 // Embedded (default): zero-config, base64-encoded WASM inline
-await init(['serpent', 'sha3'])
+await init(['serpent', 'sha3']);
 
 // Streaming: uses instantiateStreaming for performance
-await init(['serpent'], 'streaming', { wasmUrl: '/assets/wasm/' })
+await init(['serpent'], 'streaming', { wasmUrl: '/assets/wasm/' });
 
 // Manual: provide your own binary
-await init(['serpent'], 'manual', { wasmBinary: { serpent: myBuffer } })
+await init(['serpent'], 'manual', { wasmBinary: { serpent: myBuffer } });
 			</code></pre>
 
 			<h3>Documentation</h3>
