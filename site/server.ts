@@ -49,36 +49,28 @@ Bun.serve<WsData>({
 	port: PORT,
 
 	async fetch(req: Request, server) {
-		const { pathname } = new URL(req.url);
+    const { pathname } = new URL(req.url);
 
-		// WebSocket upgrade — relay only
-		if (pathname === '/relay') {
-			const ok = server.upgrade(req, { data: { roomCode: '', slot: 0 } });
-			if (ok) return undefined;
-			return new Response('WebSocket endpoint — connect via ws://', { status: 200 });
-		}
+    if (pathname === '/relay') {
+        const ok = server.upgrade(req, { data: { roomCode: '', slot: 0 } });
+        if (ok) return undefined;
+        return new Response('WebSocket endpoint', { status: 200 });
+    }
 
-		// Static routes — paths are relative to this file (site/)
-		const routes: Record<string, string> = {
-			'/': './index.html',
-			'/demos': './index.html',
-			'/demos.html': './index.html',
-			'/web': './lvthn.html',
-			'/chat': './lvthn-chat.html',
-		};
+    // Path remapping for clean URLs
+    const remapped: Record<string, string> = {
+        '/demos':  './index.html',
+        '/web':  './lvthn.html',
+        '/chat': './lvthn-chat.html',
+    };
 
-		const file = routes[pathname];
-		if (file) {
-			const f = Bun.file(file);
-			if (await f.exists()) {
-				return new Response(f, {
-					headers: { 'Content-Type': 'text/html; charset=utf-8' },
-				});
-			}
-		}
+    const filePath = remapped[pathname] ?? `.${pathname === '/' ? '/index.html' : pathname}`;
+    const f = Bun.file(filePath);
 
-		return new Response('Not Found', { status: 404 });
-	},
+    if (await f.exists()) return new Response(f);
+
+    return new Response('Not Found', { status: 404 });
+},
 
 	websocket: {
 		data: {} as WsData,
