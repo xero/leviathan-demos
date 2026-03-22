@@ -89,7 +89,6 @@
 			}
 			aside {
 				display: flex;
-				width: min(250px, 60vw);
 
 				@media (width >= 40em) {
 					margin-left: auto;
@@ -112,7 +111,8 @@
 			padding: clamp(0.5rem, 2vw, 1rem);
 
 			&.banner {
-				padding-bottom: clamp(0.2rem, 1vw, 0.1rem);
+				padding-inline: clamp(0.5rem, 2vw, 1rem);
+				padding-block: clamp(0.2rem, 1vw, 0.1rem);
 			}
 
 			@media (width >= 40em) {
@@ -454,7 +454,7 @@
 					<header>
 						<nav>
 							<section>
-								<h2>Demos <a href="https://github.com/xero/leviathan-demos">↗</a></h2>
+								<h2>Demos <a href="https://github.com/xero/leviathan-demos"><svg width="30" height="35"><use href="icons.svg#icon-code"></use></svg></a></h2>
 									<ul>
 									<li><a href="/web">lvthn-web</a> <p>offline browser based</p><p>key/pass file encryption</p></li>
 									<li><a href="/chat">lvthn-chat</a> end-to-end encrypted chat</li>
@@ -515,8 +515,8 @@
 			</div>
 
 			<h3>Documentation</h3>
+			<p> Vist <a href="https://github.com/xero/leviathan-crypto/wiki">the wiki</a> for full API documentation</p>
 			<div class="tbl-wrap">
-				<p> Vist <a href="https://github.com/xero/leviathan-crypto/wiki">the wiki</a> for full API documentation</p>
 				<table>
 					<thead><tr><th>Module</th><th>Description</th></tr></thead>
 					<tbody>
