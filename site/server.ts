@@ -62,6 +62,7 @@ Bun.serve<WsData>({
 		const routes: Record<string, string> = {
 			'/': './index.html',
 			'/demos': './index.html',
+			'/demos.html': './index.html',
 			'/web': './lvthn.html',
 			'/chat': './lvthn-chat.html',
 		};
