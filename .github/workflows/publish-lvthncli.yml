@@ -46,7 +46,7 @@ jobs:
           git config user.email "leviathan-cicd[bot]@users.noreply.github.com"
 
       - name: bump version
-        working-directory: lvthncli
+        working-directory: lvthn-cli
         run: |
           CURRENT=$(node -p "require('./package.json').version")
           NEW=$(node -e "
@@ -81,18 +81,18 @@ jobs:
 
       - name: commit and tag
         run: |
-          git add lvthncli/package.json lvthncli/packages/*/package.json
+          git add lvthn-cli/package.json lvthn-cli/packages/*/package.json
           git commit -m "chore(release): lvthn v${{ env.VERSION }}"
           git tag "lvthn-v${{ env.VERSION }}"
           git push origin main
           git push origin "lvthn-v${{ env.VERSION }}"
 
       - name: install dependencies
-        working-directory: lvthncli
+        working-directory: lvthn-cli
         run: bun install
 
       - name: bundle workers
-        working-directory: lvthncli
+        working-directory: lvthn-cli
         run: |
           bun build src/serpent/worker.ts \
             --target browser --format esm --minify \
@@ -111,7 +111,7 @@ jobs:
           ");" > src/chacha/worker-bundle.ts
 
       - name: cross-compile all platforms
-        working-directory: lvthncli
+        working-directory: lvthn-cli
         run: |
           mkdir -p \
             packages/lvthn-linux-x64/bin \
@@ -149,7 +149,7 @@ jobs:
           ls -lh packages/*/bin/
 
       - name: publish platform packages
-        working-directory: lvthncli
+        working-directory: lvthn-cli
         run: |
           for dir in packages/*/; do
             echo "Publishing $dir..."
@@ -162,14 +162,14 @@ jobs:
         uses: actions/attest-build-provenance@v2
         with:
           subject-path: |
-            lvthncli/packages/lvthn-linux-x64/bin/lvthn
-            lvthncli/packages/lvthn-linux-arm64/bin/lvthn
-            lvthncli/packages/lvthn-darwin-x64/bin/lvthn
-            lvthncli/packages/lvthn-darwin-arm64/bin/lvthn
-            lvthncli/packages/lvthn-win32-x64/bin/lvthn.exe
+            lvthn-cli/packages/lvthn-linux-x64/bin/lvthn
+            lvthn-cli/packages/lvthn-linux-arm64/bin/lvthn
+            lvthn-cli/packages/lvthn-darwin-x64/bin/lvthn
+            lvthn-cli/packages/lvthn-darwin-arm64/bin/lvthn
+            lvthn-cli/packages/lvthn-win32-x64/bin/lvthn.exe
 
       - name: publish root package
-        working-directory: lvthncli
+        working-directory: lvthn-cli
         run: npm publish --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -180,11 +180,11 @@ jobs:
         run: |
           # Copy binaries with platform-suffixed names — gh release uses
           # the filename as the asset name, so all five must be unique.
-          cp lvthncli/packages/lvthn-linux-x64/bin/lvthn    /tmp/lvthn-linux-x64
-          cp lvthncli/packages/lvthn-linux-arm64/bin/lvthn  /tmp/lvthn-linux-arm64
-          cp lvthncli/packages/lvthn-darwin-x64/bin/lvthn   /tmp/lvthn-darwin-x64
-          cp lvthncli/packages/lvthn-darwin-arm64/bin/lvthn /tmp/lvthn-darwin-arm64
-          cp lvthncli/packages/lvthn-win32-x64/bin/lvthn.exe /tmp/lvthn-win32-x64.exe
+          cp lvthn-cli/packages/lvthn-linux-x64/bin/lvthn    /tmp/lvthn-linux-x64
+          cp lvthn-cli/packages/lvthn-linux-arm64/bin/lvthn  /tmp/lvthn-linux-arm64
+          cp lvthn-cli/packages/lvthn-darwin-x64/bin/lvthn   /tmp/lvthn-darwin-x64
+          cp lvthn-cli/packages/lvthn-darwin-arm64/bin/lvthn /tmp/lvthn-darwin-arm64
+          cp lvthn-cli/packages/lvthn-win32-x64/bin/lvthn.exe /tmp/lvthn-win32-x64.exe
 
           gh release create "lvthn-v${{ env.VERSION }}" \
             --title "lvthn v${{ env.VERSION }}" \
