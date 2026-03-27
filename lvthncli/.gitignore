@@ -1,0 +1,4 @@
+node_modules/
+dist/
+src/serpent/worker-bundle.ts
+src/chacha/worker-bundle.ts

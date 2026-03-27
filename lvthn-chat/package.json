@@ -1,0 +1,10 @@
+{
+  "name": "lvthn-chat",
+  "version": "1.0.0",
+  "dependencies": {
+    "leviathan-crypto": "^1.0.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
+  }
+}
