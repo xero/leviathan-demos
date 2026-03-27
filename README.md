@@ -2,7 +2,9 @@
 
 # https://leviathan.3xi.club
 
->[!INFO]
+<img src="https://github.com/xero/leviathan-crypto/raw/main/docs/logo.svg" alt="Leviathan logo" width="400" >
+
+>[!NOTE]
 > Demo applications and reference implementations built using
 > [leviathan-crypto](https://github.com/xero/leviathan-crypto): a
 > zero-dependency web-assembly cryptography library for TypeScript that's
