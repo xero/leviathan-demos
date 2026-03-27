@@ -8,7 +8,7 @@
     "url": "git+https://github.com/xero/leviathan-demos.git",
     "directory": "lvthncli"
   },
-  "homepage": "https://github.com/xero/leviathan-demos/tree/main/lvthncli",
+  "homepage": "https://leviathan.3xi.club",
   "type": "module",
   "bin": {
     "lvthn": "bin/lvthn"

@@ -1,16 +1,16 @@
-# lvthncli · `lvthn`
+# leviathan-crypto cli · `lvthn`
 
 A command-line file encryption tool supporting Serpent-256-CTR+HMAC-SHA256
-and XChaCha20-Poly1305. Built on [leviathan-crypto](https://github.com/xero/leviathan-crypto).
+and XChaCha20-Poly1305. Built using [leviathan-crypto](https://github.com/xero/leviathan-crypto).
 
 ## Install
 
 ```sh
 # npm
-npm install -g lvthncli
+npm install -g lvthn
 
 # bun
-bun install -g lvthncli
+bun install -g lvthn
 ```
 
 This installs the `lvthn` command globally.

@@ -5,9 +5,9 @@
 <img src="https://github.com/xero/leviathan-crypto/raw/main/docs/logo.svg" alt="Leviathan logo" width="400" >
 
 >[!NOTE]
-> Demo applications and reference implementations built using
-> [leviathan-crypto](https://github.com/xero/leviathan-crypto): a
-> zero-dependency web-assembly cryptography library for TypeScript that's
+> This repo contains demo applications and reference implementations built
+> using [leviathan-crypto](https://github.com/xero/leviathan-crypto), a
+> zero-dependency wab-assembly cryptography library for TypeScript that's
 > tree-shakeable, side-effect free, with vector verified primitives.
 >
 > Each project in this repository is a working application that can be used
@@ -40,7 +40,7 @@ lvthn keygen --armor -o my.key
 cat secret.txt | lvthn encrypt -k my.key --armor > secret.enc
 ```
 
-→ [lvthncli/README.md](./lvthncli/README.md)
+→ [lvthn-cli/README.md](./lvthn-cli/README.md)
 
 → [npmjs.org/package/lvthn](https://www.npmjs.com/package/lvthn)
 
@@ -139,7 +139,7 @@ curl -fsSL https://bun.sh/install | bash
 
 ```
 leviathan-demos/
-├── lvthncli/            # published CLI (npm: lvthncli)
+├── lvthn-cli/           # published CLI tool (npm: lvthn)
 ├── lvthncli-serpent/    # teaching artifact — Serpent-256-CTR
 ├── lvthncli-chacha/     # teaching artifact — XChaCha20-Poly1305
 ├── lvthn-web/           # single-file browser encryption tool
@@ -153,7 +153,7 @@ leviathan-demos/
 
 ## License
 
-leviathan and it's demos are written under the [MIT license](http://www.opensource.org/licenses/MIT).
+Leviathan and it's demos are written under the [MIT license](http://www.opensource.org/licenses/MIT).
 
 ```
                 ▄▄▄▄▄▄▄▄▄▄
