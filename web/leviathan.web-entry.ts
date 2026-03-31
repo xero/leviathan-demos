@@ -1,6 +1,15 @@
 // leviathan.web-entry.ts — leviathan-crypto exports for lvthn-web bundle.
 // Argon2id is the third-party argon2id npm package (not from leviathan-crypto).
-export { init, SerpentCbc, HMAC_SHA256, constantTimeEqual, bytesToHex, hexToBytes } from 'leviathan-crypto';
+export {
+	init,
+	SerpentSeal,
+	HKDF_SHA256,
+	constantTimeEqual,
+	bytesToHex,
+	hexToBytes,
+	utf8ToBytes,
+	randomBytes,
+} from 'leviathan-crypto';
 
 // argon2id WASM must be inlined as base64 for single-file HTML.
 // Bun.build loader: { '.wasm': 'base64' } converts imports to base64 strings.
