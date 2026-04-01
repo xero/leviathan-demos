@@ -69,6 +69,10 @@ Serpent has a larger security margin (32 rounds vs 20) at the cost of speed.
 ChaCha20-Poly1305 is the choice of TLS 1.3 and WireGuard. Both are good. Pick
 based on your threat model and throughput requirements.
 
+Throughput figures are approximate, measured pre-SIMD on Apple Silicon.
+leviathan-crypto v1.2.0+ includes SIMD-accelerated paths for both ciphers;
+actual numbers will be higher on SIMD-capable hardware and vary by platform.
+
 Both ciphers use the same outer format, the same scrypt key derivation, and
 the same keyfiles — a key generated with `lvthn keygen` works with either.
 

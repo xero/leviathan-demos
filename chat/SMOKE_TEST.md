@@ -105,6 +105,6 @@ Check the relay server terminal during the session:
 
 ```bash
 cd demos/lvthn-chat
-npx playwright test
+bunx playwright test
 # Expected: 29 passed
 ```

@@ -271,7 +271,7 @@ HKDF to derive separate keys for each direction.
 
 Decryption:
 ```
-plaintext = XChaCha20Poly1305.decrypt(key, nonce, ciphertext, tag, aad)
+plaintext = XChaCha20Poly1305.decrypt(key, nonce, concat(ciphertext, tag), aad)
 ```
 
 `decrypt()` verifies the Poly1305 tag before returning any plaintext. If the

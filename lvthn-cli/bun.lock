@@ -5,19 +5,36 @@
     "": {
       "name": "lvthn",
       "dependencies": {
-        "leviathan-crypto": "1.0.0",
+        "leviathan-crypto": "1.3.1",
       },
       "devDependencies": {
         "bun-types": "1.3.11",
+      },
+      "optionalDependencies": {
+        "@xero/lvthn-darwin-arm64": "1.0.2",
+        "@xero/lvthn-darwin-x64": "1.0.2",
+        "@xero/lvthn-linux-arm64": "1.0.2",
+        "@xero/lvthn-linux-x64": "1.0.2",
+        "@xero/lvthn-win32-x64": "1.0.2",
       },
     },
   },
   "packages": {
     "@types/node": ["@types/node@25.5.0", "", { "dependencies": { "undici-types": "~7.18.0" } }, "sha512-jp2P3tQMSxWugkCUKLRPVUpGaL5MVFwF8RDuSRztfwgN1wmqJeMSbKlnEtQqU8UrhTmzEmZdu2I6v2dpp7XIxw=="],
 
+    "@xero/lvthn-darwin-arm64": ["@xero/lvthn-darwin-arm64@1.0.2", "", { "os": "darwin", "cpu": "arm64" }, "sha512-CZZe5omC41rnon6OAZJqHsTnBDSTnaOJN7anvJ3T+QFEIltu0FS21Qa/ryOcn6ZaOgEAxFdzARCMLhgBLt6rEQ=="],
+
+    "@xero/lvthn-darwin-x64": ["@xero/lvthn-darwin-x64@1.0.2", "", { "os": "darwin", "cpu": "x64" }, "sha512-n0c+zAMW3k/tW8Is6pZ0rP31pHIvOD69Hq8K1IY72fm+MYlAzw18+/c9Ubvie0u1D4SC0XdBtuhJNennDgG+Ug=="],
+
+    "@xero/lvthn-linux-arm64": ["@xero/lvthn-linux-arm64@1.0.2", "", { "os": "linux", "cpu": "arm64" }, "sha512-WpixM435NjoNdkRVWGz97Jqim7OLEJ83FUSkhgUploh/sdLNxwbLiNZonxi0tJNuIMbe7nCl/tz+KrH6tBXXgA=="],
+
+    "@xero/lvthn-linux-x64": ["@xero/lvthn-linux-x64@1.0.2", "", { "os": "linux", "cpu": "x64" }, "sha512-1LBkHxNZF29NabvWClrywAON+SbrtLn0kRJLsw/sWG0WjJcwP0dQ7SUl2xkMQolYi/8Ku1AxIPVRHMRxeJFRAA=="],
+
+    "@xero/lvthn-win32-x64": ["@xero/lvthn-win32-x64@1.0.2", "", { "os": "win32", "cpu": "x64" }, "sha512-IsFwAZksOR8aJiWZGO1vUphpYSCS2b5v/3OvFVpMvZ4F9ayyGSAiagj4GLIba7WvSRBCghZkPejF6H+9Ax8baQ=="],
+
     "bun-types": ["bun-types@1.3.11", "", { "dependencies": { "@types/node": "*" } }, "sha512-1KGPpoxQWl9f6wcZh57LvrPIInQMn2TQ7jsgxqpRzg+l0QPOFvJVH7HmvHo/AiPgwXy+/Thf6Ov3EdVn1vOabg=="],
 
-    "leviathan-crypto": ["leviathan-crypto@1.0.0", "", {}, "sha512-9J0WBTBUzmXWljwMtHL31y7X7xv875bTdylaxCDFYam6m8LESAhat2Z3I3+uunnw7tapjs8nCPMBL3oY601GYg=="],
+    "leviathan-crypto": ["leviathan-crypto@1.3.1", "", {}, "sha512-SPNSYfWsW5WCG+IPip8pbUUXUZ2kpcxoFqCeBPtfFYV1ecYSQayePIDZUPy+o6UVTYguPLqHbvH8+mg86xV+tw=="],
 
     "undici-types": ["undici-types@7.18.2", "", {}, "sha512-AsuCzffGHJybSaRrmr5eHr81mwJU3kjw6M+uprWvCXiNeN9SOGwQ3Jn8jb8m3Z6izVgknn1R0FTCEAP2QrLY/w=="],
   }

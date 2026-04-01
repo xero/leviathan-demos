@@ -16,7 +16,7 @@ Offset  Size  Field    Description
 0       8     magic    "LVTHNCLI" (0x4c 0x56 0x54 0x48 0x4e 0x43 0x4c 0x49)
 8       1     version  0x01
 9       1     cipher   0x01 = Serpent-256-CTR + HMAC-SHA256
-                       0x02 = XChaCha20-Poly1305 (reserved, future use)
+                       0x02 = XChaCha20-Poly1305
 10      1     kdf      0x01 = scrypt
                        0x02 = keyfile
 11      1     flags    0x00 (reserved, must be zero)

@@ -1,0 +1,19 @@
+{
+  "name": "lvthn-chat",
+  "version": "1.3.1",
+  "author": "xero (https://x-e.ro)",
+  "license": "MIT",
+  "description": "Leviathan crypto library web demo",
+	"repository": {
+    "type": "git",
+    "url": "git+https://github.com/xero/leviathan-demos.git",
+    "directory": "chat"
+  },
+  "homepage": "https://leviathan.3xi.club",
+  "dependencies": {
+    "leviathan-crypto": "^1.3.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
+  }
+}

@@ -11,7 +11,7 @@ you want to diff two cipher implementations side by side, compare this with
 identical except for the crypto layer. Everything that changes when you swap
 ciphers is in `src/pool.ts` and `src/worker.ts`. Everything else is the same.
 
-If you just want a tool to use, [`lvthncli`](../lvthncli) combines both ciphers
+If you just want a tool to use, [`lvthn-cli`](../lvthn-cli) combines both ciphers
 with a `--cipher` flag and is the published binary.
 
 ---
@@ -68,8 +68,8 @@ a nonce under the same key.
 **Parallelism:** chunks are distributed across a worker pool (one worker per
 CPU core). Each worker owns its own WASM instance with isolated linear memory.
 Because XChaCha20-Poly1305 is already AEAD, workers need only one WASM module
-(`chacha.wasm`) compared to Serpent's two (`serpent.wasm` + `sha2.wasm`).
+(`chacha20.wasm`) compared to Serpent's two (`serpent.wasm` + `sha2.wasm`).
 
 **Format:** LVTHNCLI v1, cipher byte `0x02`. Files produced by this tool can
-be decrypted by `lvthncli` without flags — the cipher is detected from the
+be decrypted by `lvthn-cli` without flags — the cipher is detected from the
 file header automatically.

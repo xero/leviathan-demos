@@ -5,7 +5,7 @@
     "": {
       "name": "lvthn-cli-v2",
       "dependencies": {
-        "leviathan-crypto": "1.0.0",
+        "leviathan-crypto": "1.3.1",
       },
       "devDependencies": {
         "bun-types": "1.3.11",
@@ -17,7 +17,7 @@
 
     "bun-types": ["bun-types@1.3.11", "", { "dependencies": { "@types/node": "*" } }, "sha512-1KGPpoxQWl9f6wcZh57LvrPIInQMn2TQ7jsgxqpRzg+l0QPOFvJVH7HmvHo/AiPgwXy+/Thf6Ov3EdVn1vOabg=="],
 
-    "leviathan-crypto": ["leviathan-crypto@1.0.0", "", {}, "sha512-9J0WBTBUzmXWljwMtHL31y7X7xv875bTdylaxCDFYam6m8LESAhat2Z3I3+uunnw7tapjs8nCPMBL3oY601GYg=="],
+    "leviathan-crypto": ["leviathan-crypto@1.3.1", "", {}, "sha512-SPNSYfWsW5WCG+IPip8pbUUXUZ2kpcxoFqCeBPtfFYV1ecYSQayePIDZUPy+o6UVTYguPLqHbvH8+mg86xV+tw=="],
 
     "undici-types": ["undici-types@7.18.2", "", {}, "sha512-AsuCzffGHJybSaRrmr5eHr81mwJU3kjw6M+uprWvCXiNeN9SOGwQ3Jn8jb8m3Z6izVgknn1R0FTCEAP2QrLY/w=="],
   }

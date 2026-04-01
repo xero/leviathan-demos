@@ -7,7 +7,7 @@
 >[!NOTE]
 > This repo contains demo applications and reference implementations built
 > using [leviathan-crypto](https://github.com/xero/leviathan-crypto), a
-> zero-dependency wab-assembly cryptography library for TypeScript that's
+> zero-dependency WebAssembly cryptography library for TypeScript that's
 > tree-shakeable, side-effect free, with vector verified primitives.
 >
 > Each project in this repository is a working application that can be used
@@ -51,14 +51,14 @@ cat secret.txt | lvthn encrypt -k my.key --armor > secret.enc
 A single, self-contained HTML file powers this demo. Encrypt text
 or files using Serpent-256-CBC and Argon2id key derivation, then
 share the armored output. No server, installation, or network connection
-required after initial load. The code in is written to be read.
+required after initial load. The code is written to be read.
 The Encrypt-then-MAC construction, HMAC input (header with HMAC
 field zeroed + ciphertext), and Argon2id parameters are all
 intentional examples worth reading.
 
 ```sh
 cd lvthn-web && bun install && bun run build.ts
-open lvthn.html
+open dist/index.html
 ```
 
 → [lvthn-web/README.md](./lvthn-web/README.md)
@@ -153,7 +153,7 @@ leviathan-demos/
 
 ## License
 
-Leviathan and it's demos are written under the [MIT license](http://www.opensource.org/licenses/MIT).
+Leviathan and its demos are written under the [MIT license](http://www.opensource.org/licenses/MIT).
 
 ```
                 ▄▄▄▄▄▄▄▄▄▄

@@ -6,7 +6,7 @@
 //   - Tag is 16 bytes (Poly1305) not 32 (HMAC-SHA256)
 //   - Workers receive key+nonce+data directly
 
-import chachaWasmPath from '../../node_modules/leviathan-crypto/dist/chacha.wasm';
+import chachaWasmPath from '../../node_modules/leviathan-crypto/dist/chacha20.wasm';
 import { WORKER_BUNDLE } from './worker-bundle.ts';
 
 const CHUNK_SIZE = 65536;

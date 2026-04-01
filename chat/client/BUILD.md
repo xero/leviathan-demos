@@ -34,13 +34,16 @@ bun run build.ts   # still needed to do the template substitution
 - `init`              — WASM module loader (called at startup before any crypto)
 - `XChaCha20Poly1305` — AEAD encrypt/decrypt (RFC 8439 + XChaCha20 draft)
 - `bytesToHex`        — hex encoding for display
+- `bytesToBase64`     — base64 encoding for wire transport
+- `base64ToBytes`     — base64 decoding for received payloads
+- `randomBytes`       — CSPRNG nonce generation
 
 X25519 key generation and ECDH are handled by the browser's built-in
 `crypto.subtle` API — no library needed. The private key is managed by
 SubtleCrypto and is not accessible to JavaScript.
 
-`Fortuna` and `Random` are excluded — the chat client uses
-`crypto.getRandomValues()` directly for nonce generation.
+`Fortuna` is excluded — `randomBytes` from leviathan-crypto is used
+directly for nonce generation.
 
 ## Note on minification
 
