@@ -1,0 +1,50 @@
+{
+  "name": "lvthn",
+  "version": "2.0.0",
+  "description": "Serpent-256 + XChaCha20-Poly1305 file encryption CLI tool powered by leviathan-crypto",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xero/leviathan-demos.git",
+    "directory": "cli"
+  },
+  "homepage": "https://leviathan.3xi.club",
+  "type": "module",
+  "bin": {
+    "lvthn": "bin/lvthn"
+  },
+  "files": [
+    "bin/lvthn"
+  ],
+  "scripts": {
+    "build": "bun run build.ts",
+    "test": "vitest run --project source",
+    "test:dist": "vitest run --project dist",
+    "lint": "bunx eslint .",
+    "lint:fix": "bunx eslint . --fix",
+    "_shorthand": "# bake=build  fix=lint:fix  check=test  checkfull=test,bake,test:dist",
+    "bake": "bun run build",
+    "check": "bun run test",
+    "fix": "bun run lint:fix",
+    "checkfull": "bun test && bun bake && bun test:dist"
+  },
+  "optionalDependencies": {
+    "@xero/lvthn-darwin-arm64": "2.0.0",
+    "@xero/lvthn-darwin-x64": "2.0.0",
+    "@xero/lvthn-linux-arm64": "2.0.0",
+    "@xero/lvthn-linux-x64": "2.0.0",
+    "@xero/lvthn-win32-x64": "2.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "dependencies": {
+    "leviathan-crypto": "2.0.1"
+  },
+  "devDependencies": {
+    "eslint": "^10.2.0",
+    "bun-types": "1.3.11",
+    "vitest": "^4.1.4"
+  }
+}

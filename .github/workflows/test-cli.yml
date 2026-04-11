@@ -1,0 +1,12 @@
+name: test-cli
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'cli/**'
+jobs:
+  unix:
+    uses: ./.github/workflows/test-unix.yml
+  windows:
+    uses: ./.github/workflows/test-windows.yml

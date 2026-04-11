@@ -1,0 +1,12 @@
+{
+  "extends": "../tsconfig.base.json",
+	"types": ["bun","node"],
+  "compilerOptions": {
+    "lib": ["ESNext", "DOM"]
+  },
+  "include": [
+    "build.ts",
+    "leviathan.web-entry.ts",
+    "test/**/*.ts"
+  ]
+}
