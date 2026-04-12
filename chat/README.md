@@ -76,3 +76,32 @@ SubtleCrypto.
 As an **implementation reference**, the client code shows how to handle
 session state, key derivation from a shared secret, nonce management, and
 replay protection in a minimal but correct way.
+
+---
+
+## License
+
+Leviathan and its demos are written under the [MIT license](http://www.opensource.org/licenses/MIT).
+
+```
+                ▄▄▄▄▄▄▄▄▄▄
+         ▄████████████████████▄▄
+      ▄██████████████████████ ▀████▄
+    ▄█████████▀▀▀     ▀███████▄▄███████▌
+   ▐████████▀   ▄▄▄▄     ▀████████▀██▀█▌
+   ████████      ███▀▀     ████▀  █▀ █▀
+   ███████▌    ▀██▀         ██
+    ███████   ▀███           ▀██ ▀█▄
+     ▀██████   ▄▄██            ▀▀  ██▄
+       ▀█████▄   ▄██▄             ▄▀▄▀
+          ▀████▄   ▄██▄
+            ▐████   ▐███
+     ▄▄██████████    ▐███         ▄▄
+  ▄██▀▀▀▀▀▀▀▀▀▀     ▄████      ▄██▀
+▄▀  ▄▄█████████▄▄  ▀▀▀▀▀     ▄███
+ ▄██████▀▀▀▀▀▀██████▄ ▀▄▄▄▄████▀
+████▀    ▄▄▄▄▄▄▄ ▀████▄ ▀█████▀  ▄▄▄▄
+█████▄▄█████▀▀▀▀▀▀▄ ▀███▄      ▄███▀
+▀██████▀             ▀████▄▄▄████▀
+                        ▀█████▀
+```
