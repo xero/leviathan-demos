@@ -4,12 +4,10 @@
   "workspaces": {
     "": {
       "name": "lvthn",
-      "dependencies": {
-        "leviathan-crypto": "2.0.1",
-      },
       "devDependencies": {
         "bun-types": "1.3.11",
         "eslint": "^10.2.0",
+        "leviathan-crypto": "2.0.1",
         "vitest": "^4.1.4",
       },
       "optionalDependencies": {

@@ -1,10 +1,6 @@
 # `lvthn` leviathan-crypto cli tool
 
-> [!NOTE]
-> A command-line file encryption tool supporting Serpent-256-CBC+HMAC-SHA256
-> and XChaCha20-Poly1305. Built on [leviathan-crypto](https://github.com/xero/leviathan-crypto).
-
----
+> Command-line file encryption with paranoid-grade ciphers. Serpent-256-CBC and XChaCha20-Poly1305, WASM-SIMD accelerated, powered by [leviathan-crypto](https://github.com/xero/leviathan-crypto).
 
 ## Install
 
@@ -122,3 +118,32 @@ full wire format specification.
 **Integrity.** Any modification to a ciphertext chunk causes that chunk's
 authentication to fail. The entire decryption is rejected; no partial plaintext
 is produced.
+
+---
+
+## license
+
+leviathan-crypto and its demos are written under the [mit license](http://www.opensource.org/licenses/mit).
+
+```
+                ▄▄▄▄▄▄▄▄▄▄
+         ▄████████████████████▄▄
+      ▄██████████████████████ ▀████▄
+    ▄█████████▀▀▀     ▀███████▄▄███████▌
+   ▐████████▀   ▄▄▄▄     ▀████████▀██▀█▌
+   ████████      ███▀▀     ████▀  █▀ █▀
+   ███████▌    ▀██▀         ██
+    ███████   ▀███           ▀██ ▀█▄
+     ▀██████   ▄▄██            ▀▀  ██▄
+       ▀█████▄   ▄██▄             ▄▀▄▀
+          ▀████▄   ▄██▄
+            ▐████   ▐███
+     ▄▄██████████    ▐███         ▄▄
+  ▄██▀▀▀▀▀▀▀▀▀▀     ▄████      ▄██▀
+▄▀  ▄▄█████████▄▄  ▀▀▀▀▀     ▄███
+ ▄██████▀▀▀▀▀▀██████▄ ▀▄▄▄▄████▀
+████▀    ▄▄▄▄▄▄▄ ▀████▄ ▀█████▀  ▄▄▄▄
+█████▄▄█████▀▀▀▀▀▀▄ ▀███▄      ▄███▀
+▀██████▀             ▀████▄▄▄████▀
+                        ▀█████▀
+```

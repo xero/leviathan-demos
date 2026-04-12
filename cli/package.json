@@ -1,7 +1,7 @@
 {
   "name": "lvthn",
   "version": "2.0.1",
-  "description": "Serpent-256 + XChaCha20-Poly1305 file encryption CLI tool powered by leviathan-crypto",
+  "description": "Command-line file encryption with paranoid-grade ciphers. Serpent-256-CBC and XChaCha20-Poly1305, WASM-SIMD accelerated, powered by leviathan-crypto.",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -14,19 +14,20 @@
     "lvthn": "bin/lvthn"
   },
   "files": [
-    "bin/lvthn"
+    "bin/"
   ],
   "scripts": {
     "build": "bun run build.ts",
     "test": "vitest run --project source",
     "test:dist": "vitest run --project dist",
+    "test:watch": "vitest --project source --reporter=verbose",
     "lint": "bunx eslint .",
     "lint:fix": "bunx eslint . --fix",
-    "_shorthand": "# bake=build  fix=lint:fix  check=test  checkfull=test,bake,test:dist",
+    "_shorthand": "# bake=build  fix=lint:fix  check=test  checkfull=check+bake+test:dist",
     "bake": "bun run build",
     "check": "bun run test",
     "fix": "bun run lint:fix",
-    "checkfull": "bun test && bun bake && bun test:dist"
+    "checkfull": "bun check && bun bake && bun test:dist"
   },
   "optionalDependencies": {
     "@xero/lvthn-darwin-arm64": "2.0.1",
@@ -39,12 +40,37 @@
     "access": "public",
     "provenance": true
   },
-  "dependencies": {
-    "leviathan-crypto": "2.0.1"
-  },
   "devDependencies": {
-    "eslint": "^10.2.0",
+    "leviathan-crypto": "2.0.1",
+    "eslint": "10.2.0",
     "bun-types": "1.3.11",
-    "vitest": "^4.1.4"
-  }
+    "vitest": "4.1.4"
+  },
+  "keywords": [
+    "cli",
+    "command-line",
+    "terminal",
+    "binary",
+    "cross-platform",
+    "encryption",
+    "file-encryption",
+    "stream-encryption",
+    "cryptography",
+    "crypto",
+    "security",
+    "serpent",
+    "serpent-256",
+    "chacha20",
+    "xchacha20",
+    "xchacha20-poly1305",
+    "aead",
+    "wasm",
+    "simd",
+    "scrypt",
+    "key-derivation",
+    "keyfile",
+    "keygen",
+    "passphrase",
+    "armor"
+  ]
 }
