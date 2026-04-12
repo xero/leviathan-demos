@@ -1,6 +1,6 @@
 {
   "name": "lvthn",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "Command-line file encryption with paranoid-grade ciphers. Serpent-256-CBC and XChaCha20-Poly1305, WASM-SIMD accelerated, powered by leviathan-crypto.",
   "license": "MIT",
   "repository": {
@@ -30,11 +30,11 @@
     "checkfull": "bun check && bun bake && bun test:dist"
   },
   "optionalDependencies": {
-    "@xero/lvthn-darwin-arm64": "2.0.2",
-    "@xero/lvthn-darwin-x64": "2.0.2",
-    "@xero/lvthn-linux-arm64": "2.0.2",
-    "@xero/lvthn-linux-x64": "2.0.2",
-    "@xero/lvthn-win32-x64": "2.0.2"
+    "@xero/lvthn-darwin-arm64": "2.0.3",
+    "@xero/lvthn-darwin-x64": "2.0.3",
+    "@xero/lvthn-linux-arm64": "2.0.3",
+    "@xero/lvthn-linux-x64": "2.0.3",
+    "@xero/lvthn-win32-x64": "2.0.3"
   },
   "publishConfig": {
     "access": "public",
