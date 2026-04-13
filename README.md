@@ -44,6 +44,31 @@ cat secret.txt | lvthn encrypt -k my.key --armor > secret.enc
 
 ---
 
+### `kyber`
+#### ml-kem post-quantum key establishment demo
+
+**The demo to show someone who asks why post-quantum cryptography matters today.**
+
+Simulates a complete ML-KEM key encapsulation ceremony between two browser-side
+clients. A live wire at the top of the page logs every value that crosses the
+channel; importantly, the shared secret never appears in the wire. After the
+ceremony completes, both sides independently derive a symmetric key using
+HKDF-SHA256 and exchange messages encrypted with XChaCha20-Poly1305. Each wire
+frame is expandable, revealing the raw nonce, ciphertext, Poly1305 tag, and
+AAD.
+
+
+```sh
+cd kyber && bun install && bun bake
+open dist/index.html
+```
+
+→ [kyber/README.md](./kyber/README.md)
+
+→ [browser demo](https://leviathan.3xi.club/kyber)
+
+---
+
 ### `web`
 #### browser-based encryption tool
 
@@ -106,6 +131,7 @@ curl -fsSL https://bun.sh/install | bash
 ```
 leviathan-demos/
 ├── cli/                 # published CLI tool (npm: lvthn)
+├── kyber/               # ML-KEM post-quantum key establishment demo
 ├── web/                 # single-file browser encryption tool
 ├── chat/                # E2E encrypted chat demo
 ├── package.json         # workspace root (lint tools only)

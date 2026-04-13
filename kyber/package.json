@@ -1,0 +1,32 @@
+{
+  "name": "leviathan-kyber-demo",
+  "version": "2.0.1",
+  "author": "xero (https://x-e.ro)",
+  "license": "MIT",
+  "description": "Leviathan crypto library ML-KEM post-quantum key establishment demo",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xero/leviathan-demos.git",
+    "directory": "kyber"
+  },
+  "homepage": "https://leviathan.3xi.club",
+  "scripts": {
+    "build": "bun run build.ts",
+    "lint": "npx eslint . --fix",
+    "_shorthand": "# aliases: 'bun bake' = build, 'bun fix' = lint:fix",
+    "bake": "bun run build",
+    "fix": "bun run lint"
+  },
+  "dependencies": {
+    "leviathan-crypto": "2.0.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "bun-types": "1.3.11",
+    "@types/node": "^25.6.0",
+    "eslint": "^10.2.0",
+    "jiti": "^2.6.1",
+    "typescript-eslint": "^8.58.1"
+  }
+}
