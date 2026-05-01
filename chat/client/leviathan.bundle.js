@@ -1,7 +1,7 @@
-// ../../../leviathan-crypto/dist/ct-wasm.js
-var CT_WASM = new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 1, 8, 1, 96, 3, 127, 127, 127, 1, 127, 2, 16, 1, 3, 101, 110, 118, 6, 109, 101, 109, 111, 114, 121, 2, 1, 1, 1, 3, 2, 1, 0, 7, 20, 2, 7, 99, 111, 109, 112, 97, 114, 101, 0, 0, 6, 109, 101, 109, 111, 114, 121, 2, 0, 10, 111, 1, 109, 2, 3, 127, 1, 123, 3, 64, 32, 3, 65, 16, 106, 34, 4, 32, 2, 76, 4, 64, 32, 6, 32, 0, 32, 3, 106, 253, 0, 4, 0, 32, 1, 32, 3, 106, 253, 0, 4, 0, 253, 81, 253, 80, 33, 6, 32, 4, 33, 3, 12, 1, 11, 11, 3, 64, 32, 2, 32, 3, 74, 4, 64, 32, 5, 32, 0, 32, 3, 106, 45, 0, 0, 32, 1, 32, 3, 106, 45, 0, 0, 115, 114, 33, 5, 32, 3, 65, 1, 106, 33, 3, 12, 1, 11, 11, 32, 6, 253, 83, 4, 64, 65, 0, 15, 11, 32, 5, 69, 11]);
+// ../node_modules/leviathan-crypto/dist/ct-wasm.js
+var CT_WASM = new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 1, 8, 1, 96, 3, 127, 127, 127, 1, 127, 3, 2, 1, 0, 5, 4, 1, 1, 1, 1, 7, 20, 2, 7, 99, 111, 109, 112, 97, 114, 101, 0, 0, 6, 109, 101, 109, 111, 114, 121, 2, 0, 10, 133, 1, 1, 130, 1, 3, 2, 127, 1, 126, 1, 123, 3, 64, 32, 3, 65, 16, 106, 34, 4, 32, 2, 76, 4, 64, 32, 6, 32, 0, 32, 3, 106, 253, 0, 4, 0, 32, 1, 32, 3, 106, 253, 0, 4, 0, 253, 81, 253, 80, 33, 6, 32, 4, 33, 3, 12, 1, 11, 11, 3, 64, 32, 2, 32, 3, 74, 4, 64, 32, 5, 32, 0, 32, 3, 106, 49, 0, 0, 32, 1, 32, 3, 106, 49, 0, 0, 133, 132, 33, 5, 32, 3, 65, 1, 106, 33, 3, 12, 1, 11, 11, 66, 0, 32, 5, 32, 6, 253, 29, 0, 32, 6, 253, 29, 1, 132, 132, 34, 5, 125, 32, 5, 132, 66, 63, 135, 66, 127, 133, 167, 65, 1, 113, 11]);
 
-// ../../../leviathan-crypto/dist/utils.js
+// ../node_modules/leviathan-crypto/dist/utils.js
 var bytesToHex = (bytes) => {
   const lut = "0123456789abcdef";
   let str = "";
@@ -13,13 +13,13 @@ var base64ToBytes = (b64) => {
   b64 = b64.replace(/-/g, "+").replace(/_/g, "/").replace(/%3d/gi, "=");
   const rem = b64.length % 4;
   if (rem === 1)
-    return;
+    throw new RangeError("base64ToBytes: invalid base64 input");
   if (rem === 2)
     b64 += "==";
   if (rem === 3)
     b64 += "=";
   if (!/^[A-Za-z0-9+/]*={0,2}$/.test(b64))
-    return;
+    throw new RangeError("base64ToBytes: invalid base64 input");
   let strlen = b64.length / 4 * 3;
   if (b64.charAt(b64.length - 1) === "=")
     strlen--;
@@ -29,7 +29,7 @@ var base64ToBytes = (b64) => {
     try {
       return new Uint8Array(atob(b64).split("").map((c) => c.charCodeAt(0)));
     } catch {
-      return;
+      throw new RangeError("base64ToBytes: invalid base64 input");
     }
   }
   const decodingTable = new Int8Array([
@@ -208,22 +208,29 @@ var bytesToBase64 = (bytes, url = false) => {
 var _ctCompare = null;
 var _ctMem = null;
 var _ctInit = false;
+var _ctInitError = null;
 var CT_MAX_BYTES = 32768;
 function _initCt() {
-  if (_ctInit)
-    return _ctCompare !== null;
+  if (_ctInit) {
+    if (_ctInitError)
+      throw _ctInitError;
+    return;
+  }
   _ctInit = true;
+  if (!hasSIMD()) {
+    _ctInitError = new Error("leviathan-crypto: constantTimeEqual requires WebAssembly SIMD — " + "this runtime does not support it");
+    throw _ctInitError;
+  }
   try {
-    if (!hasSIMD())
-      return false;
-    _ctMem = new WebAssembly.Memory({ initial: 1, maximum: 1 });
     const buf = CT_WASM.buffer.slice(CT_WASM.byteOffset, CT_WASM.byteOffset + CT_WASM.byteLength);
     const mod = new WebAssembly.Module(buf);
-    const inst = new WebAssembly.Instance(mod, { env: { memory: _ctMem } });
-    _ctCompare = inst.exports.compare;
-    return true;
-  } catch {
-    return false;
+    const inst = new WebAssembly.Instance(mod);
+    const exports = inst.exports;
+    _ctMem = exports.memory;
+    _ctCompare = exports.compare;
+  } catch (cause) {
+    _ctInitError = new Error(`leviathan-crypto: ct WASM module failed to instantiate: ${cause.message}`);
+    throw _ctInitError;
   }
 }
 var constantTimeEqual = (a, b) => {
@@ -231,24 +238,25 @@ var constantTimeEqual = (a, b) => {
     return false;
   if (a.length > CT_MAX_BYTES)
     throw new RangeError(`constantTimeEqual: max ${CT_MAX_BYTES} bytes (got ${a.length})`);
-  if (_initCt() && _ctMem && _ctCompare) {
-    const mem = new Uint8Array(_ctMem.buffer);
-    mem.set(a, 0);
-    mem.set(b, a.length);
-    try {
-      return _ctCompare(0, a.length, a.length) === 1;
-    } finally {
-      mem.fill(0, 0, a.length * 2);
-    }
+  _initCt();
+  const memObj = _ctMem;
+  const compare = _ctCompare;
+  if (!memObj || !compare)
+    throw new Error("leviathan-crypto: ct init invariant violated");
+  const mem = new Uint8Array(memObj.buffer);
+  mem.set(a, 0);
+  mem.set(b, a.length);
+  try {
+    return compare(0, a.length, a.length) === 1;
+  } finally {
+    mem.fill(0, 0, a.length * 2);
   }
-  let diff = 0;
-  for (let i = 0;i < a.length; i++)
-    diff |= a[i] ^ b[i];
-  return diff === 0;
 };
 var randomBytes = (n) => {
+  if (typeof globalThis.crypto === "undefined" || typeof globalThis.crypto.getRandomValues !== "function")
+    throw new Error("leviathan-crypto: crypto.getRandomValues is required — " + "this runtime does not expose the Web Crypto API");
   const buf = new Uint8Array(n);
-  crypto.getRandomValues(buf);
+  globalThis.crypto.getRandomValues(buf);
   return buf;
 };
 var _simd = null;
@@ -299,10 +307,7 @@ function hasSIMD() {
   return _simd;
 }
 
-// ../../../leviathan-crypto/dist/loader.js
-function makeImports() {
-  return { env: { memory: new WebAssembly.Memory({ initial: 3, maximum: 3 }) } };
-}
+// ../node_modules/leviathan-crypto/dist/loader.js
 function toArrayBuffer(bytes) {
   if (bytes.byteOffset === 0 && bytes.byteLength === bytes.buffer.byteLength)
     return bytes.buffer;
@@ -314,8 +319,6 @@ async function decodeWasm(b64) {
   if (typeof DecompressionStream === "undefined")
     throw new Error("leviathan-crypto: DecompressionStream not available — " + "use a URL, ArrayBuffer, or WebAssembly.Module source in this runtime");
   const compressed = base64ToBytes(b64);
-  if (!compressed)
-    throw new Error("leviathan-crypto: corrupt embedded WASM — base64 decode failed");
   const ds = new DecompressionStream("gzip");
   const writer = ds.writable.getWriter();
   const reader = ds.readable.getReader();
@@ -335,50 +338,94 @@ async function decodeWasm(b64) {
   }
   return out;
 }
-async function loadWasm(source) {
+var MAX_THENABLE_DEPTH = 3;
+async function compileWasm(source, _depth = 0) {
+  if (_depth > MAX_THENABLE_DEPTH)
+    throw new TypeError(`leviathan-crypto: thenable nesting too deep (max ${MAX_THENABLE_DEPTH})`);
   if (typeof source === "string") {
     if (source.length === 0)
       throw new TypeError("leviathan-crypto: invalid WasmSource — empty string");
-    return (await WebAssembly.instantiate(toArrayBuffer(await decodeWasm(source)), makeImports())).instance;
+    return WebAssembly.compile(toArrayBuffer(await decodeWasm(source)));
   }
   if (source instanceof URL)
-    return (await WebAssembly.instantiateStreaming(fetch(source.href), makeImports())).instance;
+    return WebAssembly.compileStreaming(fetch(source.href));
   if (source instanceof ArrayBuffer)
-    return (await WebAssembly.instantiate(source, makeImports())).instance;
+    return WebAssembly.compile(source);
   if (source instanceof Uint8Array)
-    return (await WebAssembly.instantiate(toArrayBuffer(source), makeImports())).instance;
+    return WebAssembly.compile(toArrayBuffer(source));
   if (source instanceof WebAssembly.Module)
-    return WebAssembly.instantiate(source, makeImports());
+    return source;
   if (typeof Response !== "undefined" && source instanceof Response)
-    return (await WebAssembly.instantiateStreaming(source, makeImports())).instance;
-  if (source != null && typeof source.then === "function")
-    return (await WebAssembly.instantiateStreaming(source, makeImports())).instance;
+    return WebAssembly.compileStreaming(source);
+  if (source != null && typeof source.then === "function") {
+    const resolved = await source;
+    return compileWasm(resolved, _depth + 1);
+  }
   throw new TypeError(`leviathan-crypto: invalid WasmSource — got ${source === null ? "null" : typeof source}`);
 }
+async function loadWasm(source) {
+  const mod = await compileWasm(source);
+  return WebAssembly.instantiate(mod);
+}
 
-// ../../../leviathan-crypto/dist/init.js
+// ../node_modules/leviathan-crypto/dist/init.js
 var ALIASES = { keccak: "sha3" };
 function resolve(mod) {
   return ALIASES[mod] ?? mod;
 }
 var instances = new Map;
+var pending = new Map;
+var owners = new Map;
 async function initModule(mod, source) {
   const resolved = resolve(mod);
   if (instances.has(resolved))
     return;
+  const inflight = pending.get(resolved);
+  if (inflight) {
+    await inflight;
+    return;
+  }
   if ((resolved === "serpent" || resolved === "chacha20" || resolved === "kyber") && !hasSIMD())
     throw new Error("leviathan-crypto: serpent, chacha20, and kyber require WebAssembly SIMD — " + "this runtime does not support it");
-  instances.set(resolved, await loadWasm(source));
+  const p = loadWasm(source);
+  pending.set(resolved, p);
+  try {
+    instances.set(resolved, await p);
+  } finally {
+    pending.delete(resolved);
+  }
 }
 function getInstance(mod) {
-  const inst = instances.get(resolve(mod));
+  const r = resolve(mod);
+  const inst = instances.get(r);
   if (!inst) {
     throw new Error(`leviathan-crypto: call init({ ${mod}: ... }) before using this class`);
   }
+  if (owners.has(r)) {
+    throw new Error(`leviathan-crypto: another stateful instance is using the '${r}' WASM module — ` + "call dispose() on it before constructing a new one");
+  }
   return inst;
 }
+function _acquireModule(mod) {
+  const r = resolve(mod);
+  if (owners.has(r))
+    throw new Error(`leviathan-crypto: another stateful instance is using the '${r}' WASM module — ` + "call dispose() on it before constructing a new one");
+  const tok = Symbol(r);
+  owners.set(r, tok);
+  return tok;
+}
+function _releaseModule(mod, tok) {
+  const r = resolve(mod);
+  if (owners.get(r) === tok)
+    owners.delete(r);
+}
+function _assertNotOwned(mod) {
+  const r = resolve(mod);
+  if (owners.has(r))
+    throw new Error(`leviathan-crypto: another stateful instance is using the '${r}' WASM module — ` + "call dispose() on it before constructing a new one");
+}
 
-// ../../../leviathan-crypto/dist/errors.js
+// ../node_modules/leviathan-crypto/dist/errors.js
 class AuthenticationError extends Error {
   constructor(cipher) {
     super(`${cipher}: authentication failed`);
@@ -387,17 +434,17 @@ class AuthenticationError extends Error {
   }
 }
 
-// ../../../leviathan-crypto/dist/sha2/index.js
+// ../node_modules/leviathan-crypto/dist/sha2/index.js
 async function sha2Init(source) {
   return initModule("sha2", source);
 }
 
-// ../../../leviathan-crypto/dist/serpent/index.js
+// ../node_modules/leviathan-crypto/dist/serpent/index.js
 async function serpentInit(source) {
   return initModule("serpent", source);
 }
 
-// ../../../leviathan-crypto/dist/chacha20/ops.js
+// ../node_modules/leviathan-crypto/dist/chacha20/ops.js
 function polyFeed(x, data) {
   if (data.length === 0)
     return;
@@ -435,7 +482,6 @@ function aeadEncrypt(x, key, nonce, plaintext, aad) {
   if (aadPad > 0)
     polyFeed(x, new Uint8Array(aadPad));
   x.chachaSetCounter(1);
-  x.chachaLoadKey();
   mem.set(plaintext, x.getChunkPtOffset());
   x.chachaEncryptChunk_simd(plaintext.length);
   const ctOff = x.getChunkCtOffset();
@@ -475,6 +521,10 @@ function aeadDecrypt(x, key, nonce, ciphertext, tag, aad, cipherName = "chacha20
   if (!constantTimeEqual(expectedTag, tag)) {
     const ctOff = x.getChunkCtOffset();
     mem.fill(0, ctOff, ctOff + maxChunk);
+    const blockOff = x.getChachaBlockOffset();
+    mem.fill(0, blockOff, blockOff + 64);
+    const polyKeyOff = x.getPolyKeyOffset();
+    mem.fill(0, polyKeyOff, polyKeyOff + 32);
     throw new AuthenticationError(cipherName);
   }
   x.chachaSetCounter(1);
@@ -514,7 +564,7 @@ function xcDecrypt(x, key, nonce, ciphertext, aad) {
   return aeadDecrypt(x, subkey, inner, ct, tag, aad, "xchacha20-poly1305");
 }
 
-// ../../../leviathan-crypto/dist/chacha20/index.js
+// ../node_modules/leviathan-crypto/dist/chacha20/index.js
 async function chacha20Init(source) {
   return initModule("chacha20", source);
 }
@@ -530,15 +580,16 @@ class XChaCha20Poly1305 {
   encrypt(key, nonce, plaintext, aad = new Uint8Array(0)) {
     if (this._used)
       throw new Error("leviathan-crypto: encrypt() already called on this instance. " + "Create a new instance for each encryption to prevent nonce reuse.");
+    this._used = true;
+    _assertNotOwned("chacha20");
     if (key.length !== 32)
       throw new RangeError(`key must be 32 bytes (got ${key.length})`);
     if (nonce.length !== 24)
       throw new RangeError(`XChaCha20 nonce must be 24 bytes (got ${nonce.length})`);
-    const result = xcEncrypt(this.x, key, nonce, plaintext, aad);
-    this._used = true;
-    return result;
+    return xcEncrypt(this.x, key, nonce, plaintext, aad);
   }
   decrypt(key, nonce, ciphertext, aad = new Uint8Array(0)) {
+    _assertNotOwned("chacha20");
     if (key.length !== 32)
       throw new RangeError(`key must be 32 bytes (got ${key.length})`);
     if (nonce.length !== 24)
@@ -548,11 +599,12 @@ class XChaCha20Poly1305 {
     return xcDecrypt(this.x, key, nonce, ciphertext, aad);
   }
   dispose() {
+    _assertNotOwned("chacha20");
     this.x.wipeBuffers();
   }
 }
 
-// ../../../leviathan-crypto/dist/sha3/index.js
+// ../node_modules/leviathan-crypto/dist/sha3/index.js
 async function sha3Init(source) {
   return initModule("sha3", source);
 }
@@ -576,11 +628,21 @@ class SHAKE128 {
   _squeezing = false;
   _block = new Uint8Array(168);
   _blockPos = 168;
+  _tok;
   constructor() {
     this.x = getExports2();
-    this.x.shake128Init();
+    this._tok = _acquireModule("sha3");
+    try {
+      this.x.shake128Init();
+    } catch (e) {
+      _releaseModule("sha3", this._tok);
+      this._tok = undefined;
+      throw e;
+    }
   }
   reset() {
+    if (this._tok === undefined)
+      throw new Error("SHAKE128: instance has been disposed");
     this.x.shake128Init();
     this._squeezing = false;
     this._block.fill(0);
@@ -588,12 +650,16 @@ class SHAKE128 {
     return this;
   }
   absorb(msg) {
+    if (this._tok === undefined)
+      throw new Error("SHAKE128: instance has been disposed");
     if (this._squeezing)
       throw new Error("SHAKE128: cannot absorb after squeeze — call reset() first");
     absorb(this.x, msg);
     return this;
   }
   squeeze(n) {
+    if (this._tok === undefined)
+      throw new Error("SHAKE128: instance has been disposed");
     if (n < 1)
       throw new RangeError(`squeeze length must be >= 1 (got ${n})`);
     if (!this._squeezing) {
@@ -619,6 +685,8 @@ class SHAKE128 {
     return out;
   }
   hash(msg, outputLength) {
+    if (this._tok === undefined)
+      throw new Error("SHAKE128: instance has been disposed");
     if (outputLength < 1)
       throw new RangeError(`outputLength must be >= 1 (got ${outputLength})`);
     this.reset();
@@ -626,8 +694,15 @@ class SHAKE128 {
     return this.squeeze(outputLength);
   }
   dispose() {
+    if (this._tok === undefined)
+      return;
     this._block.fill(0);
-    this.x.wipeBuffers();
+    try {
+      this.x.wipeBuffers();
+    } finally {
+      _releaseModule("sha3", this._tok);
+      this._tok = undefined;
+    }
   }
 }
 
@@ -637,11 +712,21 @@ class SHAKE256 {
   _squeezing = false;
   _block = new Uint8Array(136);
   _blockPos = 136;
+  _tok;
   constructor() {
     this.x = getExports2();
-    this.x.shake256Init();
+    this._tok = _acquireModule("sha3");
+    try {
+      this.x.shake256Init();
+    } catch (e) {
+      _releaseModule("sha3", this._tok);
+      this._tok = undefined;
+      throw e;
+    }
   }
   reset() {
+    if (this._tok === undefined)
+      throw new Error("SHAKE256: instance has been disposed");
     this.x.shake256Init();
     this._squeezing = false;
     this._block.fill(0);
@@ -649,12 +734,16 @@ class SHAKE256 {
     return this;
   }
   absorb(msg) {
+    if (this._tok === undefined)
+      throw new Error("SHAKE256: instance has been disposed");
     if (this._squeezing)
       throw new Error("SHAKE256: cannot absorb after squeeze — call reset() first");
     absorb(this.x, msg);
     return this;
   }
   squeeze(n) {
+    if (this._tok === undefined)
+      throw new Error("SHAKE256: instance has been disposed");
     if (n < 1)
       throw new RangeError(`squeeze length must be >= 1 (got ${n})`);
     if (!this._squeezing) {
@@ -680,6 +769,8 @@ class SHAKE256 {
     return out;
   }
   hash(msg, outputLength) {
+    if (this._tok === undefined)
+      throw new Error("SHAKE256: instance has been disposed");
     if (outputLength < 1)
       throw new RangeError(`outputLength must be >= 1 (got ${outputLength})`);
     this.reset();
@@ -687,21 +778,28 @@ class SHAKE256 {
     return this.squeeze(outputLength);
   }
   dispose() {
+    if (this._tok === undefined)
+      return;
     this._block.fill(0);
-    this.x.wipeBuffers();
+    try {
+      this.x.wipeBuffers();
+    } finally {
+      _releaseModule("sha3", this._tok);
+      this._tok = undefined;
+    }
   }
 }
 
-// ../../../leviathan-crypto/dist/keccak/index.js
+// ../node_modules/leviathan-crypto/dist/keccak/index.js
 async function keccakInit(source) {
   return initModule("keccak", source);
 }
 
-// ../../../leviathan-crypto/dist/kyber/index.js
+// ../node_modules/leviathan-crypto/dist/kyber/index.js
 async function kyberInit(source) {
   return initModule("kyber", source);
 }
-// ../../../leviathan-crypto/dist/index.js
+// ../node_modules/leviathan-crypto/dist/index.js
 var _dispatchers = {
   serpent: serpentInit,
   chacha20: chacha20Init,
@@ -723,10 +821,10 @@ async function init(sources) {
   await Promise.all(entries.map(([mod, src]) => _dispatchers[mod](src)));
 }
 
-// ../../../leviathan-crypto/dist/embedded/chacha20.js
-var WASM_GZ_BASE64 = "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";
-// ../../../leviathan-crypto/dist/embedded/sha2.js
-var WASM_GZ_BASE642 = "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";
+// ../node_modules/leviathan-crypto/dist/embedded/chacha20.js
+var WASM_GZ_BASE64 = "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";
+// ../node_modules/leviathan-crypto/dist/embedded/sha2.js
+var WASM_GZ_BASE642 = "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";
 // leviathan.chat-entry.ts
 await init({ chacha20: WASM_GZ_BASE64, sha2: WASM_GZ_BASE642 });
 export {

@@ -1,6 +1,6 @@
 {
   "name": "lvthn-chat",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "author": "xero (https://x-e.ro)",
   "license": "MIT",
   "description": "Leviathan crypto library web demo",
@@ -19,7 +19,7 @@
   },
   "homepage": "https://leviathan.3xi.club",
   "dependencies": {
-    "leviathan-crypto": "2.0.1"
+    "leviathan-crypto": "2.1.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1"

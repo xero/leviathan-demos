@@ -6,6 +6,7 @@
   },
   "include": [
     "build.ts",
-    "leviathan.kyber-entry.ts"
+    "leviathan.kyber-entry.ts",
+    "test/**/*.ts"
   ]
 }
