@@ -1,5 +1,5 @@
 /**
- * completions.ts — Pure completion logic + shell script templates.
+ * completions.ts: Pure completion logic + shell script templates.
  * No imports from the rest of the app. No shell-specific runtime code.
  */
 
@@ -37,8 +37,8 @@ const MUTEX: Record<string, string[][]> = {
 };
 
 const VALUE_FLAGS: Record<string, string[]> = {
-	'-c': ['serpent', 'chacha'],
-	'--cipher': ['serpent', 'chacha'],
+	'-c': ['serpent', 'chacha', 'aes'],
+	'--cipher': ['serpent', 'chacha', 'aes'],
 	'-k': ['__files__'],
 	'--keyfile': ['__files__'],
 	'-o': ['__files__'],
@@ -47,7 +47,7 @@ const VALUE_FLAGS: Record<string, string[]> = {
 	'--passphrase': [],
 };
 
-// Short/long alias pairs — used to suppress both forms when either is seen
+// Short/long alias pairs, used to suppress both forms when either is seen
 const ALIASES: Record<string, string[]> = {
 	'-p': ['--passphrase'],  '--passphrase': ['-p'],
 	'-k': ['--keyfile'],     '--keyfile': ['-k'],
@@ -73,7 +73,7 @@ export function getCompletions(words: string[]): string[] {
 
 	// tokens before the current (incomplete) one
 	const before = toks.slice(1, -1);
-	const _cur   = toks[toks.length - 1];  // intentionally unused — filtering is the shell's job
+	const _cur   = toks[toks.length - 1];  // intentionally unused; filtering is the shell's job
 	const prev   = before[before.length - 1] ?? cmd;
 
 	// if prev is a value-consuming flag, return its values

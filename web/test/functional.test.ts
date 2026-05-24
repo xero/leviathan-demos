@@ -1,10 +1,10 @@
 /**
- * functional.test.ts — Functional crypto tests for lvthn.html
+ * functional.test.ts: Functional crypto tests for the lvthn-web UI.
  *
- * Covers key-based encrypt/decrypt round-trips, error paths,
- * KDF mismatch detection, file-input flows, and format verification.
- *
- * Run with: bunx playwright test
+ * Covers all three cipher suites (Serpent, XChaCha20, AES-GCM-SIV) across
+ * both KDF modes (scrypt passphrase, raw keyfile), KDF mismatch detection,
+ * file-input flows, and LVTHN v3 format header verification. Files
+ * produced here are byte-compatible with the lvthn CLI.
  */
 
 import { test, expect, type Page } from '@playwright/test';
@@ -12,12 +12,9 @@ import { resolve } from 'node:path';
 
 const HTML_PATH = `file://${resolve(process.cwd(), 'dist/index.html')}`;
 
-// 64-byte hex key (128 hex chars)
-const HEX_KEY_A = 'a'.repeat(128);
-// different 64-byte hex key
-const HEX_KEY_B = 'b'.repeat(128);
-// short key (16 bytes = 32 hex chars) — HKDF expands to 64
-const HEX_KEY_SHORT = 'cc'.repeat(16);
+// 32-byte hex keys (64 hex chars each), the CLI keyfile size.
+const HEX_KEY_A = 'a'.repeat(64);
+const HEX_KEY_B = 'b'.repeat(64);
 
 async function waitForAction(page: Page, mode: 'ENCRYPT' | 'DECRYPT') {
 	await page.waitForFunction(
@@ -47,6 +44,11 @@ async function fillHexKey(page: Page, hex: string) {
 	await page.locator('#kf-hex-input').fill(hex);
 }
 
+async function selectCipher(page: Page, name: 'serpent' | 'chacha' | 'aes') {
+	// The radio input is visually hidden; click the wrapping label instead.
+	await page.locator(`#lbl-cipher-${name}`).click();
+}
+
 async function encryptText(page: Page, plaintext: string): Promise<string> {
 	await page.locator('#input-text').fill(plaintext);
 	await page.locator('#action-btn').click();
@@ -68,14 +70,12 @@ test.describe('Generated key → text round-trip', () => {
 		await page.goto(HTML_PATH);
 		const plaintext = 'generated key round-trip test';
 
-		// Generate key + encrypt
 		await page.locator('#btn-encrypt').click();
 		await page.locator('#lbl-gen').click();
 		await page.locator('#btn-gen').click();
 		const keyHex = await page.locator('#key-hex').inputValue();
 		const armored = await encryptText(page, plaintext);
 
-		// Switch to decrypt, paste armored, enter same key as hex
 		await page.locator('#btn-decrypt').click();
 		await fillHexKey(page, keyHex);
 		const decrypted = await decryptText(page, armored);
@@ -85,13 +85,11 @@ test.describe('Generated key → text round-trip', () => {
 	test('wrong hex key → authentication failure', async ({ page }) => {
 		await page.goto(HTML_PATH);
 
-		// Generate key + encrypt
 		await page.locator('#btn-encrypt').click();
 		await page.locator('#lbl-gen').click();
 		await page.locator('#btn-gen').click();
 		const armored = await encryptText(page, 'secret data');
 
-		// Decrypt with completely different key
 		await page.locator('#btn-decrypt').click();
 		await fillHexKey(page, HEX_KEY_B);
 		await page.locator('#input-text').fill(armored);
@@ -110,43 +108,31 @@ test.describe('Keyfile hex round-trip', () => {
 		await page.goto(HTML_PATH);
 		const plaintext = 'hex keyfile round-trip';
 
-		// Encrypt
 		await page.locator('#btn-encrypt').click();
 		await fillHexKey(page, HEX_KEY_A);
 		const armored = await encryptText(page, plaintext);
 
-		// Decrypt
 		await page.locator('#btn-decrypt').click();
 		await fillHexKey(page, HEX_KEY_A);
 		const decrypted = await decryptText(page, armored);
 		expect(decrypted).toBe(plaintext);
 	});
 
-	test('short hex key works via HKDF expansion', async ({ page }) => {
+	test('short hex key is rejected', async ({ page }) => {
 		await page.goto(HTML_PATH);
-		const plaintext = 'short key HKDF test';
 
-		// Encrypt with 16-byte key (HKDF expands to 64)
 		await page.locator('#btn-encrypt').click();
-		await fillHexKey(page, HEX_KEY_SHORT);
-		const armored = await encryptText(page, plaintext);
-
-		// Decrypt with same short key
-		await page.locator('#btn-decrypt').click();
-		await fillHexKey(page, HEX_KEY_SHORT);
-		const decrypted = await decryptText(page, armored);
-		expect(decrypted).toBe(plaintext);
+		await fillHexKey(page, 'cc'.repeat(16)); // 16 bytes; CLI requires exactly 32
+		await expect(page.locator('#kf-hex-status')).toHaveText(/expected 64 hex chars/);
 	});
 
 	test('wrong hex key → authentication failure', async ({ page }) => {
 		await page.goto(HTML_PATH);
 
-		// Encrypt with key A
 		await page.locator('#btn-encrypt').click();
 		await fillHexKey(page, HEX_KEY_A);
 		const armored = await encryptText(page, 'hex key mismatch test');
 
-		// Decrypt with key B
 		await page.locator('#btn-decrypt').click();
 		await fillHexKey(page, HEX_KEY_B);
 		await page.locator('#input-text').fill(armored);
@@ -161,13 +147,12 @@ test.describe('Keyfile hex round-trip', () => {
 // ── Keyfile (file upload) round-trips ─────────────────────────
 
 test.describe('Keyfile file upload round-trip', () => {
-	const keyBuffer = Buffer.alloc(64, 0xab);
+	const keyBuffer = Buffer.alloc(32, 0xab); // 32 bytes, CLI keyfile size
 
 	test('encrypt and decrypt with same uploaded keyfile', async ({ page }) => {
 		await page.goto(HTML_PATH);
 		const plaintext = 'keyfile upload round-trip';
 
-		// Encrypt with uploaded keyfile
 		await page.locator('#btn-encrypt').click();
 		await page.locator('#lbl-kf').click();
 		await page.locator('#kf-picker').setInputFiles({
@@ -177,7 +162,6 @@ test.describe('Keyfile file upload round-trip', () => {
 		});
 		const armored = await encryptText(page, plaintext);
 
-		// Decrypt with same keyfile
 		await page.locator('#btn-decrypt').click();
 		await page.locator('#lbl-kf').click();
 		await page.locator('#kf-picker').setInputFiles({
@@ -191,9 +175,8 @@ test.describe('Keyfile file upload round-trip', () => {
 
 	test('wrong keyfile → authentication failure', async ({ page }) => {
 		await page.goto(HTML_PATH);
-		const wrongKeyBuffer = Buffer.alloc(64, 0xcd);
+		const wrongKeyBuffer = Buffer.alloc(32, 0xcd);
 
-		// Encrypt with key A
 		await page.locator('#btn-encrypt').click();
 		await page.locator('#lbl-kf').click();
 		await page.locator('#kf-picker').setInputFiles({
@@ -203,7 +186,6 @@ test.describe('Keyfile file upload round-trip', () => {
 		});
 		const armored = await encryptText(page, 'wrong keyfile test');
 
-		// Decrypt with different key
 		await page.locator('#btn-decrypt').click();
 		await page.locator('#lbl-kf').click();
 		await page.locator('#kf-picker').setInputFiles({
@@ -218,6 +200,25 @@ test.describe('Keyfile file upload round-trip', () => {
 		const err = await page.locator('.output-error').textContent();
 		expect(err).toContain('authentication failed');
 	});
+
+	test('keyfile of wrong size is rejected', async ({ page }) => {
+		await page.goto(HTML_PATH);
+		const tooSmall = Buffer.alloc(16, 0xab);
+
+		await page.locator('#btn-encrypt').click();
+		await page.locator('#lbl-kf').click();
+		await page.locator('#kf-picker').setInputFiles({
+			name: 'small.key',
+			mimeType: 'application/octet-stream',
+			buffer: tooSmall,
+		});
+		await page.locator('#input-text').fill('size test');
+		await page.locator('#action-btn').click();
+		await waitForAction(page, 'ENCRYPT');
+
+		const err = await page.locator('.output-error').textContent();
+		expect(err).toContain('invalid keyfile size');
+	});
 });
 
 // ── KDF mismatch detection ────────────────────────────────────
@@ -226,15 +227,12 @@ test.describe('KDF mismatch detection', () => {
 	test('passphrase-encrypted data requires passphrase to decrypt', async ({ page }) => {
 		await page.goto(HTML_PATH);
 
-		// Encrypt with passphrase
 		await page.locator('#btn-encrypt').click();
 		await page.locator('#pp-input').fill('correct horse battery staple');
 		const armored = await encryptText(page, 'passphrase-only content');
 
-		// Reload for clean state (passphrase persists across mode switch otherwise)
 		await page.goto(HTML_PATH);
 
-		// Decrypt with keyfile mode — blob says KDF_ARGON2ID but no passphrase set
 		await page.locator('#btn-decrypt').click();
 		await fillHexKey(page, HEX_KEY_A);
 		await page.locator('#input-text').fill(armored);
@@ -248,15 +246,12 @@ test.describe('KDF mismatch detection', () => {
 	test('keyfile-encrypted data requires keyfile to decrypt', async ({ page }) => {
 		await page.goto(HTML_PATH);
 
-		// Encrypt with hex key
 		await page.locator('#btn-encrypt').click();
 		await fillHexKey(page, HEX_KEY_A);
 		const armored = await encryptText(page, 'keyfile-only content');
 
-		// Reload for clean state (keyfileData persists across mode switch otherwise)
 		await page.goto(HTML_PATH);
 
-		// Decrypt with passphrase mode — blob says KDF_KEYFILE but no keyfile set
 		await page.locator('#btn-decrypt').click();
 		await page.locator('#pp-input').fill('wrong-mode-passphrase');
 		await page.locator('#input-text').fill(armored);
@@ -276,7 +271,6 @@ test.describe('File input round-trips', () => {
 		const fileContent = 'binary file content for passphrase test';
 		const passphrase = 'file-passphrase-test-12345';
 
-		// Encrypt file with passphrase
 		await page.locator('#btn-encrypt').click();
 		await page.locator('#tab-file').click();
 		await page.locator('#file-picker').setInputFiles({
@@ -288,7 +282,6 @@ test.describe('File input round-trips', () => {
 		await page.locator('#action-btn').click();
 		await waitForAction(page, 'ENCRYPT');
 
-		// Download encrypted file
 		const [download] = await Promise.all([
 			page.waitForEvent('download'),
 			page.locator('#btn-dl-file').click(),
@@ -296,7 +289,6 @@ test.describe('File input round-trips', () => {
 		const dlPath = await download.path();
 		expect(dlPath).toBeTruthy();
 
-		// Switch to decrypt, upload encrypted file
 		await page.locator('#btn-decrypt').click();
 		await page.locator('#tab-file').click();
 		await page.locator('#file-picker').setInputFiles(dlPath!);
@@ -304,11 +296,9 @@ test.describe('File input round-trips', () => {
 		await page.locator('#action-btn').click();
 		await waitForAction(page, 'DECRYPT');
 
-		// File decrypt shows a download button (not a textarea)
 		const dlBtn = page.locator('#btn-dl-dec');
 		await expect(dlBtn).toBeVisible();
 
-		// Download decrypted and compare
 		const [decDownload] = await Promise.all([
 			page.waitForEvent('download'),
 			dlBtn.click(),
@@ -323,7 +313,6 @@ test.describe('File input round-trips', () => {
 		await page.goto(HTML_PATH);
 		const fileContent = 'binary file content for hex key test';
 
-		// Encrypt file with hex key
 		await page.locator('#btn-encrypt').click();
 		await page.locator('#tab-file').click();
 		await page.locator('#file-picker').setInputFiles({
@@ -335,14 +324,12 @@ test.describe('File input round-trips', () => {
 		await page.locator('#action-btn').click();
 		await waitForAction(page, 'ENCRYPT');
 
-		// Download encrypted file
 		const [download] = await Promise.all([
 			page.waitForEvent('download'),
 			page.locator('#btn-dl-file').click(),
 		]);
 		const dlPath = await download.path();
 
-		// Switch to decrypt, upload encrypted file, enter same key
 		await page.locator('#btn-decrypt').click();
 		await page.locator('#tab-file').click();
 		await page.locator('#file-picker').setInputFiles(dlPath!);
@@ -350,7 +337,6 @@ test.describe('File input round-trips', () => {
 		await page.locator('#action-btn').click();
 		await waitForAction(page, 'DECRYPT');
 
-		// Download decrypted and compare
 		const [decDownload] = await Promise.all([
 			page.waitForEvent('download'),
 			page.locator('#btn-dl-dec').click(),
@@ -362,10 +348,77 @@ test.describe('File input round-trips', () => {
 	});
 });
 
+// ── Cipher suite coverage ─────────────────────────────────────
+
+const CIPHERS: { name: 'serpent' | 'chacha' | 'aes'; byte: number; label: string }[] = [
+	{ name: 'serpent', byte: 0x01, label: 'Serpent-256-CBC + HMAC-SHA256' },
+	{ name: 'chacha',  byte: 0x02, label: 'XChaCha20-Poly1305' },
+	{ name: 'aes',     byte: 0x03, label: 'AES-256-GCM-SIV' },
+];
+
+test.describe('Cipher selector: encrypt/decrypt all three ciphers', () => {
+	for (const c of CIPHERS) {
+		test(`${c.label}: passphrase round-trip`, async ({ page }) => {
+			await page.goto(HTML_PATH);
+			const plaintext = `${c.label} passphrase round-trip`;
+
+			await page.locator('#btn-encrypt').click();
+			await selectCipher(page, c.name);
+			await page.locator('#pp-input').fill('correct horse battery staple');
+			const armored = await encryptText(page, plaintext);
+
+			const bytes = await decodeBlobBytes(page, armored);
+			expect(bytes[6]).toBe(c.byte);   // OFF_CIPHER = 6
+			expect(bytes[7]).toBe(0x01);     // OFF_KDF = 7, KDF_SCRYPT
+
+			await page.locator('#btn-decrypt').click();
+			await page.locator('#pp-input').fill('correct horse battery staple');
+			const decrypted = await decryptText(page, armored);
+			expect(decrypted).toBe(plaintext);
+		});
+
+		test(`${c.label}: keyfile round-trip`, async ({ page }) => {
+			await page.goto(HTML_PATH);
+			const plaintext = `${c.label} keyfile round-trip`;
+
+			await page.locator('#btn-encrypt').click();
+			await selectCipher(page, c.name);
+			await fillHexKey(page, HEX_KEY_A);
+			const armored = await encryptText(page, plaintext);
+
+			const bytes = await decodeBlobBytes(page, armored);
+			expect(bytes[6]).toBe(c.byte);   // OFF_CIPHER = 6
+			expect(bytes[7]).toBe(0x02);     // OFF_KDF = 7, KDF_KEYFILE
+
+			await page.locator('#btn-decrypt').click();
+			await fillHexKey(page, HEX_KEY_A);
+			const decrypted = await decryptText(page, armored);
+			expect(decrypted).toBe(plaintext);
+		});
+	}
+
+	test('decrypt auto-detects cipher from header (no UI selection needed)', async ({ page }) => {
+		await page.goto(HTML_PATH);
+
+		// Encrypt with ChaCha
+		await page.locator('#btn-encrypt').click();
+		await selectCipher(page, 'chacha');
+		await fillHexKey(page, HEX_KEY_A);
+		const armored = await encryptText(page, 'auto-detect cipher test');
+
+		// Switch to decrypt, where the cipher selector is hidden in decrypt mode, so
+		// the only signal is the cipher byte at offset 9 of the header.
+		await page.locator('#btn-decrypt').click();
+		await fillHexKey(page, HEX_KEY_A);
+		const decrypted = await decryptText(page, armored);
+		expect(decrypted).toBe('auto-detect cipher test');
+	});
+});
+
 // ── Format verification ───────────────────────────────────────
 
-test.describe('Binary format verification', () => {
-	test('KDF byte is 0x03 for passphrase encryption', async ({ page }) => {
+test.describe('LVTHN v3 binary format verification', () => {
+	test('KDF byte is 0x01 (scrypt) for passphrase encryption', async ({ page }) => {
 		await page.goto(HTML_PATH);
 
 		await page.locator('#btn-encrypt').click();
@@ -373,10 +426,10 @@ test.describe('Binary format verification', () => {
 		const armored = await encryptText(page, 'kdf byte test');
 
 		const bytes = await decodeBlobBytes(page, armored);
-		expect(bytes[5]).toBe(0x03); // KDF_ARGON2ID
+		expect(bytes[7]).toBe(0x01); // OFF_KDF = 7
 	});
 
-	test('KDF byte is 0x02 for keyfile encryption', async ({ page }) => {
+	test('KDF byte is 0x02 (keyfile) for keyfile encryption', async ({ page }) => {
 		await page.goto(HTML_PATH);
 
 		await page.locator('#btn-encrypt').click();
@@ -384,10 +437,10 @@ test.describe('Binary format verification', () => {
 		const armored = await encryptText(page, 'kdf byte test');
 
 		const bytes = await decodeBlobBytes(page, armored);
-		expect(bytes[5]).toBe(0x02); // KDF_KEYFILE
+		expect(bytes[7]).toBe(0x02);
 	});
 
-	test('magic bytes and version are correct', async ({ page }) => {
+	test('magic bytes "LVTHN" and version 0x03 at expected offsets', async ({ page }) => {
 		await page.goto(HTML_PATH);
 
 		await page.locator('#btn-encrypt').click();
@@ -395,16 +448,19 @@ test.describe('Binary format verification', () => {
 		const armored = await encryptText(page, 'format header test');
 
 		const bytes = await decodeBlobBytes(page, armored);
-		// MAGIC: "LVWB"
+		// MAGIC: "LVTHN", bytes 0x4c 0x56 0x54 0x48 0x4e
 		expect(bytes[0]).toBe(0x4c); // L
 		expect(bytes[1]).toBe(0x56); // V
-		expect(bytes[2]).toBe(0x57); // W
-		expect(bytes[3]).toBe(0x42); // B
-		// VERSION: 0x02
-		expect(bytes[4]).toBe(0x02);
+		expect(bytes[2]).toBe(0x54); // T
+		expect(bytes[3]).toBe(0x48); // H
+		expect(bytes[4]).toBe(0x4e); // N
+		// VERSION at offset 5
+		expect(bytes[5]).toBe(0x03);
+		// FLAGS at offset 8, reserved, must be 0x00
+		expect(bytes[8]).toBe(0x00);
 	});
 
-	test('salt is zeroed for keyfile mode', async ({ page }) => {
+	test('salt at offset 9-40 is zeroed for keyfile mode', async ({ page }) => {
 		await page.goto(HTML_PATH);
 
 		await page.locator('#btn-encrypt').click();
@@ -412,12 +468,11 @@ test.describe('Binary format verification', () => {
 		const armored = await encryptText(page, 'zero salt test');
 
 		const bytes = await decodeBlobBytes(page, armored);
-		// Bytes 6-37 (32 bytes) should be zero for keyfile mode
-		const salt = bytes.slice(6, 38);
+		const salt = bytes.slice(9, 41);
 		expect(salt.every(b => b === 0)).toBe(true);
 	});
 
-	test('salt is non-zero for passphrase mode', async ({ page }) => {
+	test('salt at offset 9-40 is non-zero for passphrase mode', async ({ page }) => {
 		await page.goto(HTML_PATH);
 
 		await page.locator('#btn-encrypt').click();
@@ -425,25 +480,22 @@ test.describe('Binary format verification', () => {
 		const armored = await encryptText(page, 'non-zero salt test');
 
 		const bytes = await decodeBlobBytes(page, armored);
-		const salt = bytes.slice(6, 38);
+		const salt = bytes.slice(9, 41);
 		expect(salt.some(b => b !== 0)).toBe(true);
 	});
 
-	test('different IV each encryption with same key', async ({ page }) => {
+	test('different nonce each encryption with same key', async ({ page }) => {
 		await page.goto(HTML_PATH);
 
-		// First encryption
 		await page.locator('#btn-encrypt').click();
 		await fillHexKey(page, HEX_KEY_A);
-		const armored1 = await encryptText(page, 'iv freshness test');
+		const armored1 = await encryptText(page, 'nonce freshness test');
 
-		// Reset and encrypt again with same key + plaintext
 		await page.locator('#btn-decrypt').click();
 		await page.locator('#btn-encrypt').click();
 		await fillHexKey(page, HEX_KEY_A);
-		const armored2 = await encryptText(page, 'iv freshness test');
+		const armored2 = await encryptText(page, 'nonce freshness test');
 
-		// Armored outputs should differ (different IV)
 		expect(armored1).not.toBe(armored2);
 	});
 });

@@ -1,6 +1,35 @@
-# `lvthn` leviathan-crypto cli tool
+# leviathan cli (`lvthn`)
 
-> Command-line file encryption with paranoid-grade ciphers. Serpent-256-CBC and XChaCha20-Poly1305, WASM-SIMD accelerated, powered by [leviathan-crypto](https://github.com/xero/leviathan-crypto).
+> [!NOTE]
+> Command-line file encryption with paranoid-grade ciphers, powered by
+> [leviathan-crypto](https://github.com/xero/leviathan-crypto). Serpent-256-CBC,
+> XChaCha20-Poly1305, and AES-256-GCM-SIV, WASM-SIMD accelerated, distributed
+> across a worker pool.
+
+> ### Table of Contents
+> - [What it does](#what-it-does)
+> - [Install](#install)
+> - [Usage](#usage)
+> - [Ciphers](#ciphers)
+> - [Build from source](#build-from-source)
+> - [Shell completions](#shell-completions)
+> - [Wire format](#wire-format)
+> - [Security notes](#security-notes)
+> - [Related](#related)
+> - [License](#license)
+
+---
+
+## What it does
+
+`lvthn` encrypts and decrypts files and pipes from the command line. One keyfile
+works with all three ciphers; the header byte chooses the algorithm on decrypt
+automatically. Encryption and decryption distribute 64KB chunks across a worker
+pool sized to `hardwareConcurrency`, and each worker owns an isolated WASM
+instance with no shared memory between workers. Output is byte-compatible with
+the [web demo](../web/README.md).
+
+---
 
 ## Install
 
@@ -14,18 +43,6 @@ npm install -g lvthn
 
 ---
 
-## Build from source
-
-Requires [Bun](https://bun.sh).
-
-```sh
-bun i
-bun bake
-# → dist/lvthn
-```
-
----
-
 ## Usage
 
 ```sh
@@ -35,13 +52,16 @@ lvthn encrypt -p "correct horse battery" secret.txt
 # Encrypt with XChaCha20-Poly1305
 lvthn encrypt --cipher chacha -p "correct horse battery" secret.txt
 
+# Encrypt with AES-256-GCM-SIV
+lvthn encrypt --cipher aes -p "correct horse battery" secret.txt
+
 # Encrypt with a keyfile
 lvthn encrypt -k my.key secret.txt secret.enc
 
 # Encrypt from stdin, armored output
 cat secret.txt | lvthn encrypt -k my.key --armor > secret.enc
 
-# Decrypt — cipher is detected automatically from the file
+# Decrypt (cipher is detected automatically from the file)
 lvthn decrypt -p "correct horse battery" secret.enc
 lvthn decrypt -k my.key secret.enc decrypted.txt
 
@@ -61,17 +81,32 @@ header tells `lvthn` which algorithm was used.
 |------|--------|----------------|------------|
 | `--cipher serpent` (default) | Serpent-256-CBC | HMAC-SHA256 per chunk | ~135 MB/s |
 | `--cipher chacha` | XChaCha20 | Poly1305 per chunk | ~565 MB/s |
+| `--cipher aes` | AES-256-GCM-SIV | POLYVAL per chunk + key commitment | hardware-dependent |
 
-Serpent has a larger security margin (32 rounds vs 20) at the cost of speed.
-ChaCha20-Poly1305 is the choice of TLS 1.3 and WireGuard. Both are good. Pick
-based on your threat model and throughput requirements.
+Serpent has a larger security margin (32 rounds versus 20) at the cost of speed.
+ChaCha20-Poly1305 is the choice of TLS 1.3 and WireGuard. AES-GCM-SIV (RFC 8452)
+is nonce-misuse-resistant and benefits from hardware AES instructions where
+available. All three are good; pick based on your threat model and throughput
+requirements.
 
-Throughput figures are approximate, measured pre-SIMD on Apple Silicon.
-leviathan-crypto v1.2.0+ includes SIMD-accelerated paths for both ciphers;
-actual numbers will be higher on SIMD-capable hardware and vary by platform.
+Throughput figures are approximate, measured pre-SIMD on Apple Silicon. Current
+leviathan-crypto releases include SIMD-accelerated paths for both ciphers, so
+actual numbers run higher on SIMD-capable hardware and vary by platform.
 
-Both ciphers use the same outer format, the same scrypt key derivation, and
-the same keyfiles. A key generated with `lvthn keygen` works with either cipher.
+All three ciphers share the same outer format, the same scrypt key derivation,
+and the same keyfiles. A key generated with `lvthn keygen` works with any cipher.
+
+---
+
+## Build from source
+
+Requires [Bun](https://bun.sh).
+
+```sh
+bun install
+bun bake
+# → dist/lvthn
+```
 
 ---
 
@@ -96,34 +131,46 @@ lvthn completion pwsh >> $PROFILE
 ```
 
 Completions cover subcommands, flags, cipher values, and file paths. The
-`--passphrase` and `--keyfile` flags are mutually exclusive; once one is used
-the other is suppressed from suggestions.
+`--passphrase` and `--keyfile` flags are mutually exclusive; once one is used the
+other is suppressed from suggestions.
 
 ---
 
-## Security
+## Wire format
 
-**Key derivation.** Passphrases go through scrypt (N=32768, r=8, p=1) with a
-fresh random 32-byte salt per encryption, producing a 32-byte master key.
-Keyfiles are read directly as 32 raw bytes.
-
-**Parallelism.** Encryption and decryption distribute 64KB chunks across a
-worker pool sized to `hardwareConcurrency`. Each worker owns an isolated WASM
-instance with no shared memory between workers.
-
-**Format.** LVTHNCLI v2 binary format. The cipher byte at offset 9 of the
-header drives decryption automatically. See [`FORMAT.md`](./FORMAT.md) for the
-full wire format specification.
-
-**Integrity.** Any modification to a ciphertext chunk causes that chunk's
-authentication to fail. The entire decryption is rejected; no partial plaintext
-is produced.
+LVTHN v3 binary format, shared with the web demo. The cipher byte at offset 6 of
+the header drives decryption automatically. See [FORMAT.md](./FORMAT.md) for the
+full wire specification, including the pool preamble layout and the counter-nonce
+scheme.
 
 ---
 
-## license
+## Security notes
 
-leviathan-crypto and its demos are written under the [mit license](http://www.opensource.org/licenses/mit).
+- **Key derivation.** Passphrases go through scrypt (N=32768, r=8, p=1) with a
+  fresh random 32-byte salt per encryption, producing a 32-byte master key.
+  Keyfiles are read directly as 32 raw bytes.
+- **Parallelism.** Encryption and decryption distribute 64KB chunks across a
+  worker pool sized to `hardwareConcurrency`. Each worker owns an isolated WASM
+  instance with no shared memory between workers.
+- **Integrity.** Any modification to a ciphertext chunk fails that chunk's
+  authentication. The entire decryption is rejected; no partial plaintext is
+  produced.
+
+---
+
+## Related
+
+- [leviathan-crypto](https://github.com/xero/leviathan-crypto): the underlying library
+- [web demo](../web/README.md), [tamper demo](../tamper/README.md), [kyber demo](../kyber/README.md), [jwt demo](../jwt/README.md)
+- [FORMAT.md](./FORMAT.md): LVTHN wire format specification
+- [npmjs.org/package/lvthn](https://www.npmjs.com/package/lvthn): published package
+
+---
+
+## License
+
+Leviathan and its demos are written under the [MIT license](http://www.opensource.org/licenses/MIT).
 
 ```
                 ▄▄▄▄▄▄▄▄▄▄

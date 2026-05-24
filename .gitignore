@@ -6,6 +6,7 @@ dist/
 node_modules/
 src/ts/embedded/
 src/worker-bundle.ts
+*/leviathan.bundle.js
 test-results/
 test/e2e/results/
 tests/results/

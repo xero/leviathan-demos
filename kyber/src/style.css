@@ -1,32 +1,33 @@
 :root {
   /* palette */
-  --bg: #0d1117;
-  --text: #efefef;
-  --depths: #161925;
-  --poseidon: #114b5f;
-  --ocean: #1c7293;
   --scales: #1a936f;
   --leaf: #2a6013;
+  --depths: #161925;
+  --charcoal: #252216;
+  --poseidon: #114b5f;
+  --ocean: #1c7293;
   --mist: #c6dabf;
   --bone: #d4d6b6;
+  --error: #c0392b;
   --ruby: #931a3e;
   --blood: #b91e4e;
-  --charcoal: #252216;
+
+  /* spacing */
+  --space: 0;
+  --gap: 1rem;
+  --radius: 0px;
+  --t: 160ms ease;
 
   /* theme */
-  --panel-bg: var(--depths);
-  --panel-err: var(--ruby);
+  --bg: var(--depths);
+  --text: var(--mist);
   --accent: var(--ocean);
-  --ok: var(--scales);
-  --err: var(--blood);
+  --border: var(--poseidon);
+  --success: var(--scales);
   --warn: var(--mist);
   --muted: var(--bone);
-  --border: var(--poseidon);
-
-  /* layout */
-  --r: 3px;
-  --t: 160ms ease;
-  --sp: 0;
+  --panel-bg: color-mix(in srgb, var(--bg) 70%, var(--poseidon) 30%);
+  --panel-err: var(--ruby);
 }
 
 html,
@@ -42,8 +43,8 @@ body {
   *::before,
   *::after {
     box-sizing: border-box;
-    margin: var(--sp);
-    padding: var(--sp);
+    margin: var(--space);
+    padding: var(--space);
     text-transform: lowercase;
   }
 }
@@ -143,7 +144,7 @@ header {
 
 .wire-box {
   border: 1px solid var(--accent);
-  border-radius: var(--r);
+  border-radius: var(--radius);
   overflow: hidden;
 }
 
@@ -190,7 +191,7 @@ header {
 
 .wire-frame {
   border: 1px solid var(--accent);
-  border-radius: var(--r);
+  border-radius: var(--radius);
   background: var(--depths);
   cursor: pointer;
   animation: fadein 300ms ease forwards;
@@ -253,21 +254,21 @@ header {
   }
 }
 
-/* null frame — the money shot */
+/* null frame: the money shot */
 .null-frame {
-  border: 2px dashed var(--err) !important;
-  background: rgba(185, 30, 78, 0.06) !important;
+  border: 2px dashed var(--error) !important;
+  background: color-mix(in srgb, var(--error) 6%, transparent) !important;
 
   .wire-frame-head {
     background: transparent !important;
   }
 
   .wire-label {
-    color: var(--err) !important;
+    color: var(--error) !important;
   }
 
   &.expanded .wire-frame-body {
-    border-top-color: var(--err);
+    border-top-color: var(--error);
   }
 }
 
@@ -291,10 +292,10 @@ header {
   }
 
   .detail-ok {
-    color: var(--ok);
+    color: var(--success);
   }
   .detail-err {
-    color: var(--err);
+    color: var(--error);
   }
 }
 
@@ -331,7 +332,7 @@ main {
   flex: 1 1 280px;
   min-width: 260px;
   border: 1px solid var(--border);
-  border-radius: var(--r);
+  border-radius: var(--radius);
   background: var(--panel-bg);
   display: flex;
   flex-direction: column;
@@ -383,10 +384,10 @@ main {
     border-left: none;
   }
   &:first-child {
-    border-radius: var(--r) 0 0 var(--r);
+    border-radius: var(--radius) 0 0 var(--radius);
   }
   &:last-child {
-    border-radius: 0 var(--r) var(--r) 0;
+    border-radius: 0 var(--radius) var(--radius) 0;
   }
 
   &.active {
@@ -423,7 +424,7 @@ main {
   width: 100%;
   background: var(--border);
   border: 1px solid var(--accent);
-  border-radius: var(--r);
+  border-radius: var(--radius);
   color: var(--text);
   cursor: pointer;
   font: inherit;
@@ -459,7 +460,7 @@ main {
   }
 
   .data-val-ok {
-    color: var(--ok);
+    color: var(--success);
   }
   .data-val-muted {
     color: var(--muted);
@@ -517,7 +518,7 @@ main {
 }
 
 .dk-hint {
-  color: var(--err);
+  color: var(--error);
   font-size: 9px;
   letter-spacing: 0.04em;
   opacity: 0.8;
@@ -552,12 +553,12 @@ main {
   padding: 8px;
   background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: var(--r);
+  border-radius: var(--radius);
 }
 
 .bubble {
   padding: 6px 10px;
-  border-radius: var(--r);
+  border-radius: var(--radius);
   font-size: 12px;
   max-width: 90%;
   word-break: break-word;
@@ -582,7 +583,7 @@ main {
     flex: 1;
     background: var(--bg);
     border: 1px solid var(--border);
-    border-radius: var(--r);
+    border-radius: var(--radius);
     color: var(--text);
     font: inherit;
     font-size: 12px;
@@ -606,7 +607,7 @@ main {
   .send-btn {
     background: var(--border);
     border: 1px solid var(--accent);
-    border-radius: var(--r);
+    border-radius: var(--radius);
     color: var(--text);
     cursor: pointer;
     font: inherit;

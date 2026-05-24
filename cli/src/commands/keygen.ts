@@ -1,5 +1,5 @@
 /**
- * keygen.ts — Generate a cryptographically secure random keyfile.
+ * keygen.ts: Generate a cryptographically secure random keyfile.
  *
  * Always produces a 64-byte (512-bit) key using Fortuna CSPRNG.
  */

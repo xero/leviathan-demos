@@ -1,5 +1,5 @@
 /**
- * spinner.ts — Ouroboros terminal animation.
+ * spinner.ts: Ouroboros terminal animation.
  *
  * Plays a looping snake animation on stderr while work is in progress.
  * Only animates when stderr is a TTY; silently no-ops otherwise.

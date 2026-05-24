@@ -7,10 +7,10 @@ import { run, randomBytes } from './helpers.ts';
 // Size chosen to span more than one 64KB chunk to exercise multi-chunk paths
 const PLAINTEXT_SIZE = 65537;
 
-type Cipher  = 'serpent' | 'chacha';
+type Cipher  = 'serpent' | 'chacha' | 'aes';
 type KeyType = 'keyfile' | 'passphrase';
 
-const CIPHERS:   Cipher[]  = ['serpent', 'chacha'];
+const CIPHERS:   Cipher[]  = ['serpent', 'chacha', 'aes'];
 const KEY_TYPES: KeyType[] = ['keyfile', 'passphrase'];
 
 describe('encrypt / decrypt', () => {
@@ -86,7 +86,7 @@ describe('encrypt / decrypt', () => {
 
 					// armored output is ASCII text
 					const armored = fs.readFileSync(enc, 'utf8');
-					expect(armored).toMatch(/^-----BEGIN LVTHNCLI/);
+					expect(armored).toMatch(/^-----BEGIN LVTHN/);
 
 					const d = run(['decrypt', ...keyArgs(keyType), enc, '-o', dec]);
 					expect(d.status).toBe(0);
@@ -107,7 +107,7 @@ describe('encrypt / decrypt', () => {
 
 		run(['encrypt', '-k', keyfile, '--cipher', 'serpent', src, '-o', enc]);
 
-		// pass wrong cipher flag — should still decrypt correctly
+		// pass wrong cipher flag, should still decrypt correctly
 		const d = run(['decrypt', '-k', keyfile, '--cipher', 'chacha', enc, '-o', dec]);
 		expect(d.status).toBe(0);
 		expect(fs.readFileSync(dec)).toEqual(plaintext);
@@ -153,7 +153,7 @@ describe('error exit codes', () => {
 		fs.rmSync(tmp, { recursive: true, force: true });
 	});
 
-	// exit 1 — authentication failure
+	// exit 1: authentication failure
 
 	it('exits 1 on wrong keyfile', () => {
 		const src  = path.join(tmp, 'plain.bin');
@@ -192,7 +192,7 @@ describe('error exit codes', () => {
 		expect(r.status).toBe(1);
 	});
 
-	// exit 2 — bad arguments
+	// exit 2: bad arguments
 
 	it('exits 2 when neither -p nor -k is given', () => {
 		const r = run(['encrypt', 'somefile.txt']);
@@ -207,7 +207,7 @@ describe('error exit codes', () => {
 	it('exits 2 on unknown cipher value', () => {
 		const src = path.join(tmp, 'plain.bin');
 		fs.writeFileSync(src, randomBytes(64));
-		const r = run(['encrypt', '-k', keyfile, '--cipher', 'aes', src]);
+		const r = run(['encrypt', '-k', keyfile, '--cipher', 'rot13', src]);
 		expect(r.status).toBe(2);
 	});
 
@@ -231,7 +231,7 @@ describe('error exit codes', () => {
 		expect(r.status).toBe(2);
 	});
 
-	// exit 3 — file not found
+	// exit 3: file not found
 
 	it('exits 3 when input file does not exist', () => {
 		const r = run(['encrypt', '-k', keyfile, path.join(tmp, 'ghost.bin')]);
@@ -245,7 +245,7 @@ describe('error exit codes', () => {
 		expect(r.status).toBe(3);
 	});
 
-	// exit 5 — invalid format
+	// exit 5: invalid format
 
 	it('exits 5 when decrypting a non-encrypted file', () => {
 		const src = path.join(tmp, 'plain.bin');

@@ -1,7 +1,8 @@
 /**
- * smoke.test.ts — Playwright smoke tests for lvthn.html
+ * smoke.test.ts: Playwright smoke tests for the lvthn-web UI.
  *
- * Run with: bunx playwright test
+ * Wire format is LVTHNCLI v3, byte-compatible with the lvthn CLI. See
+ * cli/FORMAT.md for the header layout used in the assertions below.
  */
 
 import { test, expect } from '@playwright/test';
@@ -59,18 +60,14 @@ test.describe('Mode toggle', () => {
 	test('switching mode clears output', async ({ page }) => {
 		await page.goto(HTML_PATH);
 		await page.locator('#btn-encrypt').click();
-		// Put some text in
 		await page.locator('#input-text').fill('test');
 		await page.locator('#pp-input').fill('passphrase123456789X');
 		await page.locator('#action-btn').click();
-		// Wait for encryption
 		await page.waitForFunction(() =>
 			document.getElementById('action-btn')?.textContent === 'ENCRYPT',
 		{ timeout: 30000 }
 		);
-		// Switch mode
 		await page.locator('#btn-decrypt').click();
-		// Output should be cleared
 		await expect(page.locator('#output-panel')).not.toBeVisible();
 	});
 
@@ -79,9 +76,21 @@ test.describe('Mode toggle', () => {
 		await page.locator('#btn-decrypt').click();
 		await expect(page.locator('#lbl-gen')).toHaveClass(/hidden/);
 	});
+
+	test('CIPHER panel hidden in decrypt mode', async ({ page }) => {
+		await page.goto(HTML_PATH);
+		await page.locator('#btn-decrypt').click();
+		await expect(page.locator('#sec-cipher')).toHaveClass(/hidden/);
+	});
+
+	test('CIPHER panel visible in encrypt mode', async ({ page }) => {
+		await page.goto(HTML_PATH);
+		await page.locator('#btn-encrypt').click();
+		await expect(page.locator('#sec-cipher')).not.toHaveClass(/hidden/);
+	});
 });
 
-test.describe('TEXT + PASSPHRASE — encrypt', () => {
+test.describe('TEXT + PASSPHRASE encrypt', () => {
 	test('encrypts text and produces armored output', async ({ page }) => {
 		await page.goto(HTML_PATH);
 		await page.locator('#btn-encrypt').click();
@@ -89,7 +98,6 @@ test.describe('TEXT + PASSPHRASE — encrypt', () => {
 		await page.locator('#pp-input').fill('correct horse battery staple');
 		await page.locator('#action-btn').click();
 
-		// Wait for output (Argon2id may take a few seconds)
 		await page.waitForFunction(() =>
 			document.getElementById('action-btn')?.textContent === 'ENCRYPT',
 		{ timeout: 30000 }
@@ -100,7 +108,7 @@ test.describe('TEXT + PASSPHRASE — encrypt', () => {
 		expect(outText).toContain('-----END LVTHN ENCRYPTED MESSAGE-----');
 	});
 
-	test('produces different ciphertext each time (fresh IV)', async ({ page }) => {
+	test('produces different ciphertext each time (fresh nonce)', async ({ page }) => {
 		await page.goto(HTML_PATH);
 		await page.locator('#btn-encrypt').click();
 		await page.locator('#input-text').fill('same input');
@@ -111,7 +119,6 @@ test.describe('TEXT + PASSPHRASE — encrypt', () => {
 			document.getElementById('action-btn')?.textContent === 'ENCRYPT', { timeout: 30000 });
 		const first = await page.locator('#out-text').inputValue();
 
-		// Encrypt again — same plaintext, same passphrase, different IV
 		await page.locator('#btn-decrypt').click();
 		await page.locator('#btn-encrypt').click();
 		await page.locator('#action-btn').click();
@@ -119,18 +126,16 @@ test.describe('TEXT + PASSPHRASE — encrypt', () => {
 			document.getElementById('action-btn')?.textContent === 'ENCRYPT', { timeout: 30000 });
 		const second = await page.locator('#out-text').inputValue();
 
-		// Different IV → different ciphertext
 		expect(first).not.toEqual(second);
 	});
 });
 
-test.describe('TEXT + PASSPHRASE — decrypt round-trip', () => {
+test.describe('TEXT + PASSPHRASE decrypt round-trip', () => {
 	test('decrypts back to original text', async ({ page }) => {
 		await page.goto(HTML_PATH);
 		const plaintext = 'round-trip test: hello leviathan!';
 		const passphrase = 'correct horse battery staple';
 
-		// Encrypt
 		await page.locator('#btn-encrypt').click();
 		await page.locator('#input-text').fill(plaintext);
 		await page.locator('#pp-input').fill(passphrase);
@@ -139,7 +144,6 @@ test.describe('TEXT + PASSPHRASE — decrypt round-trip', () => {
 			document.getElementById('action-btn')?.textContent === 'ENCRYPT', { timeout: 30000 });
 		const armored = await page.locator('#out-text').inputValue();
 
-		// Switch to decrypt
 		await page.locator('#btn-decrypt').click();
 		await page.locator('#input-text').fill(armored);
 		await page.locator('#pp-input').fill(passphrase);
@@ -154,7 +158,6 @@ test.describe('TEXT + PASSPHRASE — decrypt round-trip', () => {
 	test('wrong passphrase → authentication failed error', async ({ page }) => {
 		await page.goto(HTML_PATH);
 
-		// Encrypt with one passphrase
 		await page.locator('#btn-encrypt').click();
 		await page.locator('#input-text').fill('secret message');
 		await page.locator('#pp-input').fill('correct horse battery');
@@ -163,7 +166,6 @@ test.describe('TEXT + PASSPHRASE — decrypt round-trip', () => {
 			document.getElementById('action-btn')?.textContent === 'ENCRYPT', { timeout: 30000 });
 		const armored = await page.locator('#out-text').inputValue();
 
-		// Decrypt with wrong passphrase
 		await page.locator('#btn-decrypt').click();
 		await page.locator('#input-text').fill(armored);
 		await page.locator('#pp-input').fill('wrong passphrase!!');
@@ -186,13 +188,17 @@ test.describe('TEXT + PASSPHRASE — decrypt round-trip', () => {
 			document.getElementById('action-btn')?.textContent === 'ENCRYPT', { timeout: 30000 });
 		let armored = await page.locator('#out-text').inputValue();
 
-		// Tamper: flip one base64 character in the data section
 		const lines = armored.split('\n');
-		const dataLine = lines.findIndex(l => l && !l.startsWith('---'));
-		if (dataLine > -1 && lines[dataLine].length > 1) {
-			const chars = lines[dataLine].split('');
-			chars[Math.floor(chars.length / 2)] = chars[Math.floor(chars.length / 2)] === 'A' ? 'B' : 'A';
-			lines[dataLine] = chars.join('');
+		// Skip the first two data lines so we don't clobber magic/header bytes;
+		// land somewhere inside the pool payload where a flipped bit produces an
+		// authentication failure rather than a header decode error.
+		const firstData = lines.findIndex(l => l && !l.startsWith('---'));
+		const targetLine = firstData + 2;
+		if (targetLine > -1 && lines[targetLine] && lines[targetLine].length > 1) {
+			const chars = lines[targetLine].split('');
+			const mid = Math.floor(chars.length / 2);
+			chars[mid] = chars[mid] === 'A' ? 'B' : 'A';
+			lines[targetLine] = chars.join('');
 			armored = lines.join('\n');
 		}
 
@@ -209,13 +215,14 @@ test.describe('TEXT + PASSPHRASE — decrypt round-trip', () => {
 });
 
 test.describe('GENERATE KEY flow', () => {
-	test('generates a 512-bit key on click', async ({ page }) => {
+	test('generates a 256-bit key on click', async ({ page }) => {
 		await page.goto(HTML_PATH);
 		await page.locator('#btn-encrypt').click();
 		await page.locator('#lbl-gen').click();
 		await page.locator('#btn-gen').click();
 		const hex = await page.locator('#key-hex').inputValue();
-		expect(hex).toMatch(/^[0-9a-f]{128}$/); // 512 bits = 64 bytes = 128 hex chars
+		// 256 bits = 32 bytes = 64 hex chars; matches CLI keyfile size.
+		expect(hex).toMatch(/^[0-9a-f]{64}$/);
 	});
 
 	test('generates different key each click', async ({ page }) => {
@@ -231,31 +238,26 @@ test.describe('GENERATE KEY flow', () => {
 });
 
 test.describe('GENERATE KEY + encrypt/decrypt round-trip', () => {
-	test('encrypts with generated key and decrypts with keyfile', async ({ page }) => {
+	test('encrypts with generated key and verifies KDF byte', async ({ page }) => {
 		await page.goto(HTML_PATH);
 		const plaintext = 'keyfile round-trip test';
 
-		// Generate key
 		await page.locator('#btn-encrypt').click();
 		await page.locator('#lbl-gen').click();
 		await page.locator('#btn-gen').click();
-		const _keyHex = await page.locator('#key-hex').inputValue();
-
-		// Encrypt
 		await page.locator('#input-text').fill(plaintext);
 		await page.locator('#action-btn').click();
 		await page.waitForFunction(() =>
-			document.getElementById('action-btn')?.textContent === 'ENCRYPT', { timeout: 15000 });
+			document.getElementById('action-btn')?.textContent === 'ENCRYPT', { timeout: 30000 });
 		const armored = await page.locator('#out-text').inputValue();
 
-		// Verify format — KDF byte should be keyfile (0x02)
 		const kdfByte = await page.evaluate((arm) => {
 			const lines = arm.trim().split('\n');
 			const b64 = lines.slice(1, lines.findIndex(l => l.startsWith('---END'))).join('');
 			const binary = atob(b64);
 			const bytes = new Uint8Array(binary.length);
 			for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-			return bytes[5]; // OFF_KDF = 5
+			return bytes[7]; // OFF_KDF = 7 in LVTHN v3
 		}, armored);
 		expect(kdfByte).toBe(0x02); // KDF_KEYFILE
 	});
@@ -265,7 +267,7 @@ test.describe('Passphrase strength indicator', () => {
 	test('shows weak for short passphrase', async ({ page }) => {
 		await page.goto(HTML_PATH);
 		await page.locator('#btn-encrypt').click();
-		await page.locator('#input-text').fill('x'); // need some input to trigger render
+		await page.locator('#input-text').fill('x');
 		await page.locator('#pp-input').fill('short');
 		await expect(page.locator('#pp-strength')).toHaveText('⚠ weak');
 	});
@@ -371,7 +373,7 @@ test.describe('Invalid format', () => {
 		await page.waitForFunction(() =>
 			document.getElementById('action-btn')?.textContent === 'DECRYPT', { timeout: 30000 });
 		const err = await page.locator('.output-error').textContent();
-		expect(err).toMatch(/unrecognized format|format/i);
+		expect(err).toMatch(/unrecognized format|format|file too short|not an LVTHN/i);
 	});
 });
 

@@ -1,5 +1,5 @@
 /**
- * __complete.ts — hidden completion oracle invoked by shell scripts.
+ * __complete.ts: hidden completion oracle invoked by shell scripts.
  *
  * Called as: lvthn __complete -- <word0> <word1> ... <wordN>
  * Outputs one completion candidate per line to stdout.

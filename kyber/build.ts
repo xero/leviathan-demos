@@ -1,5 +1,5 @@
 /**
- * build.ts — Bundle leviathan-crypto and assemble dist/index.html.
+ * build.ts: Bundle leviathan-crypto and assemble dist/index.html.
  *
  * Usage: bun run build.ts
  *

@@ -13,15 +13,17 @@
   "homepage": "https://leviathan.3xi.club",
   "scripts": {
     "build": "bun run build.ts",
-    "lint": "npx eslint . --fix",
+    "lint": "bunx eslint .",
+    "lint:fix": "bunx eslint . --fix",
     "test": "bun test",
     "test:watch": "bun test --watch",
-    "_shorthand": "# aliases: 'bun bake' = build, 'bun fix' = lint:fix",
+    "_shorthand": "# bake=build  check=test  fix=lint:fix",
     "bake": "bun run build",
-    "fix": "bun run lint"
+    "check": "bun run test",
+    "fix": "bun run lint:fix"
   },
   "dependencies": {
-    "leviathan-crypto": "2.1.0"
+    "leviathan-crypto": "3.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

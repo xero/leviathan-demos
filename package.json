@@ -1,6 +1,6 @@
 {
   "name": "leviathan-demos",
-  "version": "2.0.1",
+  "version": "3.0.0",
   "author": "xero (https://x-e.ro)",
   "license": "MIT",
   "description": "Zero-dependency WebAssembly cryptography library for TypeScript: Serpent-256, XChaCha20-Poly1305, SHA-2/3, HMAC, HKDF, and Fortuna CSPRNG, with a strictly typed API built on vector-verified primitives.",
@@ -8,6 +8,8 @@
   "type": "module",
   "devDependencies": {
     "@eslint/js": "latest",
+    "@types/bun": "latest",
+    "@types/node": "latest",
     "eslint": "latest",
     "jiti": "latest",
     "typescript": "latest",

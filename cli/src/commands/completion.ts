@@ -1,5 +1,5 @@
 /**
- * completion.ts — print the shell completion script for the given shell.
+ * completion.ts: print the shell completion script for the given shell.
  *
  * Usage: lvthn completion <bash|zsh|fish|pwsh>
  */

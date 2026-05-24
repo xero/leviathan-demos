@@ -1,11 +1,12 @@
 /**
- * decrypt.ts — Decrypt an LVTHNCLI file, auto-detecting the cipher.
+ * decrypt.ts: Decrypt an LVTHN file, auto-detecting the cipher.
  *
- * Cipher byte at offset 9 of the header selects the pool:
+ * Cipher byte at offset 6 of the header selects the pool:
  *   0x01 (CIPHER_SERPENT) → SerpentCipher
  *   0x02 (CIPHER_CHACHA)  → XChaCha20Cipher
+ *   0x03 (CIPHER_AES)     → AESGCMSIVCipher
  *
- * The --cipher flag is not read here — the file is authoritative.
+ * The --cipher flag is not read here; the file is authoritative.
  */
 
 import { ParsedArgs, die, info } from '../cli.ts';
@@ -15,10 +16,15 @@ import { SealStreamPool, AuthenticationError } from 'leviathan-crypto';
 import { serpentWasm  } from 'leviathan-crypto/serpent/embedded';
 import { sha2Wasm     } from 'leviathan-crypto/sha2/embedded';
 import { chacha20Wasm } from 'leviathan-crypto/chacha20/embedded';
-import { XChaCha20CipherBun as XChaCha20Cipher, SerpentCipherBun as SerpentCipher } from '../cipher-suites.ts';
+import { aesWasm      } from 'leviathan-crypto/aes/embedded';
+import {
+	XChaCha20CipherBun as XChaCha20Cipher,
+	SerpentCipherBun   as SerpentCipher,
+	AESGCMSIVCipherBun as AESGCMSIVCipher,
+} from '../cipher-suites.ts';
 import {
 	decodeBlob, dearmor, dearmorKey, isArmored,
-	KDF_SCRYPT, KDF_KEYFILE, CIPHER_CHACHA, LvthnHeader,
+	KDF_SCRYPT, KDF_KEYFILE, CIPHER_CHACHA, CIPHER_AES, LvthnHeader,
 } from '../format.ts';
 
 function decodeOrDie(b: Uint8Array): { header: LvthnHeader; poolOutput: Uint8Array } {
@@ -63,11 +69,14 @@ export async function runDecrypt(args: ParsedArgs): Promise<void> {
 	if (keyfile && header.kdf !== KDF_KEYFILE)
 		die('File was encrypted with a passphrase but --keyfile was given', 2);
 
-	const useChacha = header.cipher === CIPHER_CHACHA;
-	const cipherSuite = useChacha ? XChaCha20Cipher : SerpentCipher;
-	const wasmSrc = useChacha
-		? { chacha20: chacha20Wasm, sha2: sha2Wasm }
-		: { serpent: serpentWasm,   sha2: sha2Wasm };
+	const cipherSuite =
+		header.cipher === CIPHER_CHACHA ? XChaCha20Cipher
+			: header.cipher === CIPHER_AES  ? AESGCMSIVCipher
+				: SerpentCipher;
+	const wasmSrc =
+		header.cipher === CIPHER_CHACHA ? { chacha20: chacha20Wasm, sha2: sha2Wasm }
+			: header.cipher === CIPHER_AES  ? { aes: aesWasm,           sha2: sha2Wasm }
+				: { serpent: serpentWasm, sha2: sha2Wasm };
 
 	try {
 		startSpinner();
@@ -106,7 +115,7 @@ export async function runDecrypt(args: ParsedArgs): Promise<void> {
 	} catch (err) {
 		stopSpinner();
 		if (err instanceof AuthenticationError)
-			die('authentication failed — data may be corrupted or tampered', 1);
+			die('authentication failed: data may be corrupted or tampered', 1);
 		die(`Decryption failed: ${(err as Error).message}`, 2);
 	}
 }

@@ -1,5 +1,5 @@
 /**
- * main.ts — Entry point for the unified lvthn tool.
+ * main.ts: Entry point for the unified lvthn tool.
  * Supports Serpent-256-CTR+HMAC-SHA256 and XChaCha20-Poly1305.
  */
 

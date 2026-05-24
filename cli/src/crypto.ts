@@ -1,9 +1,9 @@
 /**
- * crypto.ts — Key derivation and key generation for lvthn-chacha.
+ * crypto.ts: Key derivation and key generation for lvthn-chacha.
  *
  * Provides:
- *   - deriveKey()   — scrypt key derivation (32-byte output)
- *   - generateKey() — CSPRNG key generation (32 bytes)
+ *   - deriveKey():   scrypt key derivation (32-byte output)
+ *   - generateKey(): CSPRNG key generation (32 bytes)
  *
  * Uses crypto.getRandomValues instead of Fortuna so that only the
  * chacha20 WASM module needs to be initialized (no serpent/sha2 dependency).

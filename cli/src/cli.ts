@@ -1,5 +1,5 @@
 /**
- * cli.ts — Argument parsing, help text, and error formatting.
+ * cli.ts: Argument parsing, help text, and error formatting.
  *
  * Uses Node.js util.parseArgs (built into Bun) for argument parsing.
  */
@@ -20,7 +20,7 @@ export interface ParsedArgs {
 }
 
 const HELP_TEXT = `
-lvthn — Serpent-256 + XChaCha20-Poly1305 file encryption (leviathan demo)
+lvthn: Serpent-256, XChaCha20-Poly1305, AES-256-GCM-SIV file encryption (leviathan demo)
 
 Usage:
   lvthn <command> [options] [input] [output]
@@ -35,7 +35,7 @@ Commands:
 Encrypt options:
   -p, --passphrase <phrase>   Encrypt using passphrase (scrypt key derivation)
   -k, --keyfile <path>        Encrypt using a keyfile
-  -c, --cipher <name>         Cipher: serpent (default) or chacha
+  -c, --cipher <name>         Cipher: serpent (default), chacha, or aes
       --armor                 Output base64 armored text instead of binary
   -o, --output <path>         Output file path
       --force                 Overwrite output file if it exists
@@ -45,8 +45,8 @@ Decrypt options:
   -k, --keyfile <path>        Keyfile for decryption
   -o, --output <path>         Output file path (default: stdout)
 
-  Cipher is detected automatically from the file header — --cipher is not needed.
-  Auto-detects armored vs binary input — no --armor flag needed on decrypt.
+  Cipher is detected automatically from the file header; --cipher is not needed.
+  Auto-detects armored vs binary input; no --armor flag needed on decrypt.
 
 Keygen options:
   -o, --output <path>         Output path (default: leviathan.key)

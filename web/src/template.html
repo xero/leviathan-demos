@@ -3,8 +3,8 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<meta name="theme-color" content="#0d1117" />
-		<title>lvthn — Serpent-256 Encryption</title>
+		<meta name="theme-color" content="#161925" />
+		<title>leviathan-crypto: browser encryption demo</title>
 		<style>{{APP_STYLE}}</style>
 	</head>
 	<body>
@@ -51,6 +51,30 @@
 								<button class="clear-btn" id="clear-file" title="clear">×</button>
 							</div>
 						</div>
+					</div>
+				</div>
+
+				<!-- Cipher panel: encrypt mode only; decrypt reads cipher byte from header -->
+				<div class="panel" id="sec-cipher">
+					<header class="panel-head">
+						<h2 class="panel-label">CIPHER</h2>
+					</header>
+					<div class="panel-body">
+						<fieldset class="key-radio-group seg-group">
+							<legend class="sr-only">cipher suite</legend>
+							<label class="key-radio-label cipher-radio-label checked" id="lbl-cipher-serpent">
+								<input type="radio" name="cipher" value="serpent" checked />
+								SERPENT
+							</label>
+							<label class="key-radio-label cipher-radio-label" id="lbl-cipher-chacha">
+								<input type="radio" name="cipher" value="chacha" />
+								XCHACHA20
+							</label>
+							<label class="key-radio-label cipher-radio-label" id="lbl-cipher-aes">
+								<input type="radio" name="cipher" value="aes" />
+								AES-GCM-SIV
+							</label>
+						</fieldset>
 					</div>
 				</div>
 
@@ -122,7 +146,7 @@
 									<button class="btn" id="btn-copy-hex">COPY</button>
 									<button class="btn" id="btn-dl-key">DOWNLOAD .key</button>
 								</div>
-								<p class="key-warning">⚠ save this key — it cannot be recovered</p>
+								<p class="key-warning">⚠ save this key, it cannot be recovered</p>
 							</div>
 						</div>
 					</div>
@@ -147,34 +171,34 @@
 					<summary class="sec-summary">SECURITY DETAILS</summary>
 					<dl class="sec-content">
 						<div>
-							<dt>cipher</dt>
-							<dd>Serpent-256-CBC + HMAC-SHA256 (Encrypt-then-MAC) via SealStream</dd>
+							<dt>ciphers</dt>
+							<dd>Serpent-256-CBC + HMAC-SHA256, XChaCha20-Poly1305, AES-256-GCM-SIV, selectable per encryption and auto-detected on decrypt via header byte</dd>
 						</div>
 						<div>
 							<dt>kdf</dt>
-							<dd>Argon2id — 19 MiB RAM, 2 passes, 1 thread (OWASP 2023 minimum) for passphrase mode; HKDF-SHA256 for keyfile mode</dd>
+							<dd>scrypt (N=32768, r=8, p=1, dkLen=32) for passphrase mode; raw 32-byte keys for keyfile mode, byte-compatible with the lvthn CLI</dd>
 						</div>
 						<div>
 							<dt>key</dt>
-							<dd>64 bytes (512-bit) — 32-byte encryption key + 32-byte MAC key</dd>
+							<dd>32 bytes (256-bit); HKDF-SHA-256 derives per-stream subkeys inside the seal pool</dd>
 						</div>
 						<div>
-							<dt>iv</dt>
-							<dd>128-bit, fresh per encryption via WebCrypto getRandomValues</dd>
+							<dt>streaming</dt>
+							<dd>SealStreamPool: 64 KiB chunks with TAG_FINAL counter nonce; chunk reordering or truncation fails authentication</dd>
 						</div>
 						<div>
 							<dt>format</dt>
-							<dd>LVWB v2 — 38-byte header + SerpentSeal output (IV + ciphertext + HMAC)</dd>
+							<dd>LVTHN v3: 41-byte header (magic, version, cipher, kdf, flags, salt) + pool output. Same on-disk format as the lvthn CLI</dd>
 						</div>
 					</dl>
 				</details>
 			</div>
 		</main>
 		<footer>
-			<a class="wiki" href="https://github.com/xero/leviathan-crypto/wiki/sealing#sealstream">SealStream</a> &middot;
+			<a class="wiki" href="https://github.com/xero/leviathan-crypto/wiki/sealing#sealstreampool">SealStreamPool</a> &middot;
 			<a class="wiki" href="https://github.com/xero/leviathan-crypto/wiki/serpent#serpentcbc">Serpent-256</a> &middot;
-			<a class="wiki" href="https://github.com/xero/leviathan-crypto/wiki/argon2id">Argon2id</a> &middot;
-			<a class="wiki" href="https://github.com/xero/leviathan-crypto/wiki/sha2#hkdf_sha256">HKDF-SHA256</a> &middot;
+			<a class="wiki" href="https://github.com/xero/leviathan-crypto/wiki/chacha20#xchacha20-poly1305">XChaCha20</a> &middot;
+			<a class="wiki" href="https://github.com/xero/leviathan-crypto/wiki/aes#aes-gcm-siv">AES-GCM-SIV</a> &middot;
 			<a href="https://github.com/xero/leviathan-crypto/">leviathan-crypto</a> &middot;
 			<a href="https://github.com/xero/leviathan-demos/">demos</a>
 		</footer>

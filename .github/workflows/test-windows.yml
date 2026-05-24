@@ -1,11 +1,13 @@
 name: test-windows
 on:
   workflow_call:
+    inputs:
+      bun-version:
+        description: 'Bun version to install'
+        required: false
+        type: string
+        default: '1.3.13'
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - 'cli/**'
 jobs:
   smoke-test:
     runs-on: windows-latest
@@ -15,7 +17,7 @@ jobs:
       - name: setup bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
-          bun-version: 'latest'
+          bun-version: ${{ inputs.bun-version || '1.3.13' }}
 
       - name: Install dependencies
         working-directory: cli
@@ -81,7 +83,7 @@ jobs:
           Test-Case "keygen --armor: correct header" {
             & $binary keygen --armor -o "$distDir\test-armored.key" --force 2>&1 | Out-Null
             $line1 = Get-Content "$distDir\test-armored.key" | Select-Object -First 1
-            if ($line1 -ne "-----BEGIN LVTHNCLI KEY-----") { throw "got: $line1" }
+            if ($line1 -ne "-----BEGIN LVTHN KEY-----") { throw "got: $line1" }
           }
 
           $plaintext = "hello leviathan - windows smoke test"
@@ -107,7 +109,7 @@ jobs:
             $armorOut = & $binary encrypt -k "$distDir\test.key" "$distDir\small.txt" --armor -o "$distDir\armored.txt" 2>&1
             if ($LASTEXITCODE -ne 0) { throw "encrypt failed: $armorOut" }
             $line1 = Get-Content "$distDir\armored.txt" | Select-Object -First 1
-            if ($line1 -ne "-----BEGIN LVTHNCLI ENCRYPTED MESSAGE-----") { throw "bad header: $line1" }
+            if ($line1 -ne "-----BEGIN LVTHN ENCRYPTED MESSAGE-----") { throw "bad header: $line1" }
             & $binary decrypt -k "$distDir\test.key" "$distDir\armored.txt" -o "$distDir\armored-dec.txt" 2>&1 | Out-Null
             $h1 = (Get-FileHash "$distDir\small.txt"       -Algorithm SHA256).Hash
             $h2 = (Get-FileHash "$distDir\armored-dec.txt" -Algorithm SHA256).Hash

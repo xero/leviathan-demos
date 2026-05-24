@@ -1,32 +1,33 @@
 :root {
   /* palette */
-  --bg: #0d1117;
-  --text: #efefef;
-  --depths: #161925;
-  --poseidon: #114b5f;
-  --ocean: #1c7293;
   --scales: #1a936f;
   --leaf: #2a6013;
+  --depths: #161925;
+  --charcoal: #252216;
+  --poseidon: #114b5f;
+  --ocean: #1c7293;
   --mist: #c6dabf;
   --bone: #d4d6b6;
+  --error: #c0392b;
   --ruby: #931a3e;
   --blood: #b91e4e;
-  --charcoal: #252216;
+
+  /* spacing */
+  --space: 0;
+  --gap: 1rem;
+  --radius: 0px;
+  --t: 160ms ease;
 
   /* theme */
-  --panel-bg: var(--depths);
-  --panel-err: var(--ruby);
+  --bg: var(--depths);
+  --text: var(--mist);
   --accent: var(--ocean);
-  --ok: var(--scales);
-  --err: var(--blood);
+  --border: var(--poseidon);
+  --success: var(--scales);
   --warn: var(--mist);
   --muted: var(--bone);
-  --border: var(--poseidon);
-
-  /* layout */
-  --r: 3px;
-  --t: 160ms ease;
-  --sp: 0;
+  --panel-bg: color-mix(in srgb, var(--bg) 70%, var(--poseidon) 30%);
+  --panel-err: var(--ruby);
 }
 
 html,
@@ -42,8 +43,8 @@ body {
   *::before,
   *::after {
     box-sizing: border-box;
-    margin: var(--sp);
-    padding: var(--sp);
+    margin: var(--space);
+    padding: var(--space);
     text-transform: lowercase;
   }
 }
@@ -88,10 +89,10 @@ a {
   gap: 0;
 
   > :first-child {
-    border-radius: var(--r) 0 0 var(--r);
+    border-radius: var(--radius) 0 0 var(--radius);
   }
   > :last-child {
-    border-radius: 0 var(--r) var(--r) 0;
+    border-radius: 0 var(--radius) var(--radius) 0;
     border-left: none;
   }
   > :not(:first-child):not(:last-child) {
@@ -169,7 +170,7 @@ main {
 .hero-btn {
   background: none;
   border: 2px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius);
   color: var(--muted);
   font: inherit;
   font-size: 16px;
@@ -195,7 +196,7 @@ main {
 /* ── Panels ── */
 .panel {
   border: 1px solid var(--border);
-  border-radius: var(--r);
+  border-radius: var(--radius);
   margin-bottom: 16px;
 }
 
@@ -220,7 +221,7 @@ main {
 }
 
 #output-panel.error {
-  border-color: var(--err);
+  border-color: var(--error);
   .panel-head {
     border-bottom: 1px solid var(--panel-err);
     background: #84002b;
@@ -257,7 +258,7 @@ textarea {
   width: 100%;
   background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: var(--r);
+  border-radius: var(--radius);
   color: var(--text);
   font: inherit;
   font-size: 12px;
@@ -293,7 +294,7 @@ textarea {
 /* ── Drop zones ── */
 .drop-zone {
   border: 1px dashed var(--border);
-  border-radius: var(--r);
+  border-radius: var(--radius);
   padding: 24px 16px;
   text-align: center;
   cursor: pointer;
@@ -315,7 +316,7 @@ textarea {
   flex: 1;
   background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: var(--r);
+  border-radius: var(--radius);
   color: var(--text);
   font: inherit;
   font-size: 12px;
@@ -339,7 +340,7 @@ textarea {
   gap: 10px;
   padding: 10px 12px;
   border: 1px solid var(--border);
-  border-radius: var(--r);
+  border-radius: var(--radius);
   font-size: 12px;
 
   .fname {
@@ -365,8 +366,8 @@ textarea {
     transition: color var(--t);
 
     &:hover {
-      border-color: var(--err);
-      color: var(--err);
+      border-color: var(--error);
+      color: var(--error);
     }
   }
 }
@@ -416,7 +417,7 @@ textarea {
     flex: 1;
     background: var(--bg);
     border: 1px solid var(--border);
-    border-radius: var(--r);
+    border-radius: var(--radius);
     color: var(--text);
     font: inherit;
     font-size: 12px;
@@ -457,13 +458,13 @@ textarea {
   font-size: 13px;
 
   &.weak {
-    color: var(--err);
+    color: var(--error);
   }
   &.fair {
     color: var(--muted);
   }
   &.strong {
-    color: var(--ok);
+    color: var(--success);
   }
 }
 
@@ -477,7 +478,7 @@ textarea {
     flex: 1;
     background: var(--bg);
     border: 1px solid var(--border);
-    border-radius: var(--r);
+    border-radius: var(--radius);
     color: var(--text);
     font: inherit;
     font-size: 11px;
@@ -501,7 +502,7 @@ textarea {
 .btn {
   background: none;
   border: 1px solid var(--border);
-  border-radius: var(--r);
+  border-radius: var(--radius);
   color: var(--muted);
   cursor: pointer;
   font: inherit;
@@ -539,7 +540,7 @@ textarea {
   width: 100%;
   background: var(--border);
   border: 1px solid var(--accent);
-  border-radius: var(--r);
+  border-radius: var(--radius);
   color: var(--text);
   cursor: pointer;
   font: inherit;
@@ -578,7 +579,7 @@ textarea {
   font-size: 13px;
   padding: 8px 0;
   &::before {
-    color: var(--err);
+    color: var(--error);
     content: "✗";
     font-size: 23px;
     margin-right: 9px;
@@ -640,7 +641,7 @@ textarea {
   dt {
     width: 15%;
     flex-shrink: 0;
-    background: var(--depths);
+    background: var(--panel-bg);
     color: var(--text);
     padding: 5px 10px;
     border-bottom: 4px solid var(--bg);

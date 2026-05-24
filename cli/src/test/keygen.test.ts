@@ -27,8 +27,8 @@ describe('keygen', () => {
 		const r = run(['keygen', '--armor', '-o', out]);
 		expect(r.status).toBe(0);
 		const content = fs.readFileSync(out, 'utf8');
-		expect(content).toMatch(/^-----BEGIN LVTHNCLI KEY-----/);
-		expect(content).toMatch(/-----END LVTHNCLI KEY-----/);
+		expect(content).toMatch(/^-----BEGIN LVTHN KEY-----/);
+		expect(content).toMatch(/-----END LVTHN KEY-----/);
 	});
 
 	it('exits 4 when output file already exists without --force', () => {

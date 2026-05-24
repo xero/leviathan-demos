@@ -1,5 +1,5 @@
 /**
- * cipher-suites.ts — Cipher suite wrappers with blob-URL worker spawning.
+ * cipher-suites.ts: Cipher suite wrappers with blob-URL worker spawning.
  *
  * Bun compiled binaries cannot resolve `new URL('./pool-worker.js', import.meta.url)`
  * because import.meta.url points into the virtual /$bunfs/root/ filesystem.
@@ -13,10 +13,11 @@
  * with format: 'iife' (see build.ts) so they carry no ES module semantics.
  */
 
-import { XChaCha20Cipher, SerpentCipher } from 'leviathan-crypto';
+import { XChaCha20Cipher, SerpentCipher, AESGCMSIVCipher } from 'leviathan-crypto';
 import type { CipherSuite } from 'leviathan-crypto';
 import { WORKER_BUNDLE as CHACHA_BUNDLE } from './chacha/worker-bundle.ts';
 import { WORKER_BUNDLE as SERPENT_BUNDLE } from './serpent/worker-bundle.ts';
+import { WORKER_BUNDLE as AES_BUNDLE } from './aes/worker-bundle.ts';
 
 export const XChaCha20CipherBun: CipherSuite = {
 	...XChaCha20Cipher,
@@ -31,6 +32,15 @@ export const SerpentCipherBun: CipherSuite = {
 	...SerpentCipher,
 	createPoolWorker(): Worker {
 		const blob = new Blob([SERPENT_BUNDLE], { type: 'text/javascript' });
+		const url  = URL.createObjectURL(blob);
+		return new Worker(url);
+	},
+};
+
+export const AESGCMSIVCipherBun: CipherSuite = {
+	...AESGCMSIVCipher,
+	createPoolWorker(): Worker {
+		const blob = new Blob([AES_BUNDLE], { type: 'text/javascript' });
 		const url  = URL.createObjectURL(blob);
 		return new Worker(url);
 	},

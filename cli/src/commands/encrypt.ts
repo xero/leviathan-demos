@@ -1,11 +1,12 @@
 /**
- * encrypt.ts — Encrypt using either Serpent or ChaCha pool.
+ * encrypt.ts: Encrypt using Serpent, ChaCha, or AES pool.
  *
- * --cipher serpent  → SerpentCipher  (default)
+ * --cipher serpent  → SerpentCipher (default)
  * --cipher chacha   → XChaCha20Cipher
+ * --cipher aes      → AESGCMSIVCipher
  *
- * The cipher byte written into the header tells decrypt which pool to use —
- * no flag needed on the decrypt side.
+ * The cipher byte written into the header tells decrypt which pool to use.
+ * No flag needed on the decrypt side.
  */
 
 import { ParsedArgs, die, info } from '../cli.ts';
@@ -15,11 +16,16 @@ import { SealStreamPool } from 'leviathan-crypto';
 import { serpentWasm  } from 'leviathan-crypto/serpent/embedded';
 import { sha2Wasm     } from 'leviathan-crypto/sha2/embedded';
 import { chacha20Wasm } from 'leviathan-crypto/chacha20/embedded';
-import { XChaCha20CipherBun as XChaCha20Cipher, SerpentCipherBun as SerpentCipher } from '../cipher-suites.ts';
+import { aesWasm      } from 'leviathan-crypto/aes/embedded';
+import {
+	XChaCha20CipherBun as XChaCha20Cipher,
+	SerpentCipherBun   as SerpentCipher,
+	AESGCMSIVCipherBun as AESGCMSIVCipher,
+} from '../cipher-suites.ts';
 import {
 	encodeBlob, armor, dearmorKey,
 	KEY_BEGIN, KDF_SCRYPT, KDF_KEYFILE, FORMAT_VERSION,
-	CIPHER_SERPENT, CIPHER_CHACHA,
+	CIPHER_SERPENT, CIPHER_CHACHA, CIPHER_AES,
 } from '../format.ts';
 
 export async function runEncrypt(args: ParsedArgs): Promise<void> {
@@ -27,8 +33,8 @@ export async function runEncrypt(args: ParsedArgs): Promise<void> {
 
 	if (!passphrase && !keyfile) die('Specify --passphrase (-p) or --keyfile (-k)', 2);
 	if (passphrase && keyfile)   die('Cannot use both --passphrase and --keyfile', 2);
-	if (cipher !== 'serpent' && cipher !== 'chacha')
-		die(`Unknown cipher: ${cipher} (valid: serpent, chacha)`, 2);
+	if (cipher !== 'serpent' && cipher !== 'chacha' && cipher !== 'aes')
+		die(`Unknown cipher: ${cipher} (valid: serpent, chacha, aes)`, 2);
 
 	const inputArg  = positionals[0] ?? null;
 	const outputArg = args.output ?? positionals[1] ?? null;
@@ -48,11 +54,18 @@ export async function runEncrypt(args: ParsedArgs): Promise<void> {
 			die(`Output file already exists: ${outputArg} (use --force to overwrite)`, 4);
 	}
 
-	const useChacha = cipher === 'chacha';
-	const cipherSuite = useChacha ? XChaCha20Cipher : SerpentCipher;
-	const wasmSrc = useChacha
-		? { chacha20: chacha20Wasm, sha2: sha2Wasm }
-		: { serpent: serpentWasm,   sha2: sha2Wasm };
+	const cipherSuite =
+		cipher === 'chacha' ? XChaCha20Cipher
+			: cipher === 'aes'  ? AESGCMSIVCipher
+				: SerpentCipher;
+	const wasmSrc =
+		cipher === 'chacha' ? { chacha20: chacha20Wasm, sha2: sha2Wasm }
+			: cipher === 'aes'  ? { aes: aesWasm,           sha2: sha2Wasm }
+				: { serpent: serpentWasm, sha2: sha2Wasm };
+	const cipherByte =
+		cipher === 'chacha' ? CIPHER_CHACHA
+			: cipher === 'aes'  ? CIPHER_AES
+				: CIPHER_SERPENT;
 
 	try {
 		startSpinner();
@@ -79,7 +92,7 @@ export async function runEncrypt(args: ParsedArgs): Promise<void> {
 		try {
 			const poolOutput = await pool.seal(plaintext);
 			const finalBlob  = encodeBlob(
-				{ version: FORMAT_VERSION, cipher: useChacha ? CIPHER_CHACHA : CIPHER_SERPENT, kdf, flags: 0x00, salt },
+				{ version: FORMAT_VERSION, cipher: cipherByte, kdf, flags: 0x00, salt },
 				poolOutput,
 			);
 

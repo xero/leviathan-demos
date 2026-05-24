@@ -11,8 +11,10 @@ export default defineConfig([
 			'**/dist/**',
 			'**/build/**',
 			'**/*.js',          // bundled outputs (leviathan.bundle.js etc.)
+			'**/worker-bundle.ts', // auto-generated WASM worker bundles
 			'**/*.html',        // templates
 			'**/playwright.config.ts',
+			'**/vitest.config.ts',
 			'eslint.config.ts',
 		],
 	},
@@ -66,7 +68,7 @@ export default defineConfig([
 	{
 		files: ['**/test/**/*.ts'],
 		rules: {
-			// Non-null assertions are acceptable in tests — shapes are known
+			// Non-null assertions are acceptable in tests; shapes are known
 			'@typescript-eslint/no-non-null-assertion': 'off',
 		},
 	},

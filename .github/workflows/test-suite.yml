@@ -1,0 +1,66 @@
+name: test suite
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Pin Bun once and pass it to every leaf via the anchor below.
+env:
+  BUN_VERSION: &bun_version '1.3.13'
+
+# No pre-stage gating: every app's suite runs in parallel, then suite-status
+# collects a single pass/fail result for the whole set. Wire branch protection
+# to the "test-status" check.
+jobs:
+  jwt:
+    uses: ./.github/workflows/test-jwt.yml
+    with:
+      bun-version: *bun_version
+
+  kyber:
+    uses: ./.github/workflows/test-kyber.yml
+    with:
+      bun-version: *bun_version
+
+  web:
+    uses: ./.github/workflows/test-web.yml
+    with:
+      bun-version: *bun_version
+
+  tamper:
+    uses: ./.github/workflows/test-tamper.yml
+    with:
+      bun-version: *bun_version
+
+  cli-unix:
+    uses: ./.github/workflows/test-unix.yml
+    with:
+      bun-version: *bun_version
+
+  cli-windows:
+    uses: ./.github/workflows/test-windows.yml
+    with:
+      bun-version: *bun_version
+
+  suite-status:
+    name: test-status
+    if: always()
+    needs:
+      - jwt
+      - kyber
+      - web
+      - tamper
+      - cli-unix
+      - cli-windows
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check results
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: |
+          echo "::error::One or more demo test jobs failed or were cancelled."
+          exit 1
+      - run: echo "All demo tests have passed."

@@ -7,13 +7,13 @@ import {
 	randomBytes,
 	bytesToHex,
 } from 'leviathan-crypto';
-import { kyberWasm }    from 'leviathan-crypto/kyber/embedded';
+import { mlkemWasm }    from 'leviathan-crypto/mlkem/embedded';
 import { sha3Wasm }     from 'leviathan-crypto/sha3/embedded';
 import { chacha20Wasm } from 'leviathan-crypto/chacha20/embedded';
 import { sha2Wasm }     from 'leviathan-crypto/sha2/embedded';
 
 beforeAll(async () => {
-	await init({ kyber: kyberWasm, sha3: sha3Wasm, chacha20: chacha20Wasm, sha2: sha2Wasm });
+	await init({ mlkem: mlkemWasm, sha3: sha3Wasm, chacha20: chacha20Wasm, sha2: sha2Wasm });
 });
 
 // ---------------------------------------------------------------------------
@@ -237,10 +237,10 @@ describe('ML-KEM-1024', () => {
 });
 
 // ---------------------------------------------------------------------------
-// ML-KEM ceremony — Alice and Bob
+// ML-KEM ceremony, Alice and Bob
 // ---------------------------------------------------------------------------
 
-describe('ML-KEM ceremony — Alice and Bob', () => {
+describe('ML-KEM ceremony, Alice and Bob', () => {
 	it('MlKem512: Alice and Bob derive the same 32-byte shared secret', () => {
 		const kem = new MlKem512();
 		try {
@@ -305,7 +305,7 @@ describe('HKDF_SHA256', () => {
 		}
 	});
 
-	it('derive is deterministic — same inputs produce the same output', () => {
+	it('derive is deterministic, same inputs produce the same output', () => {
 		const ikm  = new Uint8Array(32).fill(1);
 		const salt = new Uint8Array(32).fill(2);
 		const info = new TextEncoder().encode('determinism-test');
@@ -335,13 +335,19 @@ describe('HKDF_SHA256', () => {
 
 		const hkdf1 = new HKDF_SHA256();
 		let out1: Uint8Array;
-		try { out1 = hkdf1.derive(randomBytes(32), salt, info, 32); }
-		finally { hkdf1.dispose(); }
+		try {
+			out1 = hkdf1.derive(randomBytes(32), salt, info, 32);
+		} finally {
+			hkdf1.dispose();
+		}
 
 		const hkdf2 = new HKDF_SHA256();
 		let out2: Uint8Array;
-		try { out2 = hkdf2.derive(randomBytes(32), salt, info, 32); }
-		finally { hkdf2.dispose(); }
+		try {
+			out2 = hkdf2.derive(randomBytes(32), salt, info, 32);
+		} finally {
+			hkdf2.dispose();
+		}
 
 		expect(bytesToHex(out1!)).not.toBe(bytesToHex(out2!));
 	});
@@ -352,13 +358,19 @@ describe('HKDF_SHA256', () => {
 
 		const hkdf1 = new HKDF_SHA256();
 		let out1: Uint8Array;
-		try { out1 = hkdf1.derive(ikm, randomBytes(32), info, 32); }
-		finally { hkdf1.dispose(); }
+		try {
+			out1 = hkdf1.derive(ikm, randomBytes(32), info, 32);
+		} finally {
+			hkdf1.dispose();
+		}
 
 		const hkdf2 = new HKDF_SHA256();
 		let out2: Uint8Array;
-		try { out2 = hkdf2.derive(ikm, randomBytes(32), info, 32); }
-		finally { hkdf2.dispose(); }
+		try {
+			out2 = hkdf2.derive(ikm, randomBytes(32), info, 32);
+		} finally {
+			hkdf2.dispose();
+		}
 
 		expect(bytesToHex(out1!)).not.toBe(bytesToHex(out2!));
 	});
@@ -369,13 +381,19 @@ describe('HKDF_SHA256', () => {
 
 		const hkdf1 = new HKDF_SHA256();
 		let out1: Uint8Array;
-		try { out1 = hkdf1.derive(ikm, salt, new TextEncoder().encode('context-a'), 32); }
-		finally { hkdf1.dispose(); }
+		try {
+			out1 = hkdf1.derive(ikm, salt, new TextEncoder().encode('context-a'), 32);
+		} finally {
+			hkdf1.dispose();
+		}
 
 		const hkdf2 = new HKDF_SHA256();
 		let out2: Uint8Array;
-		try { out2 = hkdf2.derive(ikm, salt, new TextEncoder().encode('context-b'), 32); }
-		finally { hkdf2.dispose(); }
+		try {
+			out2 = hkdf2.derive(ikm, salt, new TextEncoder().encode('context-b'), 32);
+		} finally {
+			hkdf2.dispose();
+		}
 
 		expect(bytesToHex(out1!)).not.toBe(bytesToHex(out2!));
 	});
@@ -387,10 +405,10 @@ describe('HKDF_SHA256', () => {
 });
 
 // ---------------------------------------------------------------------------
-// HKDF_SHA256 ceremony — deriving a session key from a shared secret
+// HKDF_SHA256 ceremony, deriving a session key from a shared secret
 // ---------------------------------------------------------------------------
 
-describe('HKDF_SHA256 ceremony — deriving a session key', () => {
+describe('HKDF_SHA256 ceremony, deriving a session key', () => {
 	const info = new TextEncoder().encode('leviathan-kyber-demo');
 
 	it('derives a 32-byte session key from the KEM shared secret', () => {
@@ -432,13 +450,19 @@ describe('HKDF_SHA256 ceremony — deriving a session key', () => {
 
 		const hkdf1 = new HKDF_SHA256();
 		let key1: Uint8Array;
-		try { key1 = hkdf1.derive(sharedSecret, salt, info, 32); }
-		finally { hkdf1.dispose(); }
+		try {
+			key1 = hkdf1.derive(sharedSecret, salt, info, 32);
+		} finally {
+			hkdf1.dispose();
+		}
 
 		const hkdf2 = new HKDF_SHA256();
 		let key2: Uint8Array;
-		try { key2 = hkdf2.derive(sharedSecret, salt, info, 32); }
-		finally { hkdf2.dispose(); }
+		try {
+			key2 = hkdf2.derive(sharedSecret, salt, info, 32);
+		} finally {
+			hkdf2.dispose();
+		}
 
 		expect(bytesToHex(key1!)).toBe(bytesToHex(key2!));
 	});
@@ -468,13 +492,19 @@ describe('HKDF_SHA256 ceremony — deriving a session key', () => {
 
 		const hkdf1 = new HKDF_SHA256();
 		let key1: Uint8Array;
-		try { key1 = hkdf1.derive(ss1, salt, info, 32); }
-		finally { hkdf1.dispose(); }
+		try {
+			key1 = hkdf1.derive(ss1, salt, info, 32);
+		} finally {
+			hkdf1.dispose();
+		}
 
 		const hkdf2 = new HKDF_SHA256();
 		let key2: Uint8Array;
-		try { key2 = hkdf2.derive(ss2, salt, info, 32); }
-		finally { hkdf2.dispose(); }
+		try {
+			key2 = hkdf2.derive(ss2, salt, info, 32);
+		} finally {
+			hkdf2.dispose();
+		}
 
 		expect(bytesToHex(key1!)).not.toBe(bytesToHex(key2!));
 	});
@@ -505,13 +535,19 @@ describe('XChaCha20Poly1305', () => {
 
 		const enc = new XChaCha20Poly1305();
 		let ct: Uint8Array;
-		try { ct = enc.encrypt(key, nonce, pt); }
-		finally { enc.dispose(); }
+		try {
+			ct = enc.encrypt(key, nonce, pt);
+		} finally {
+			enc.dispose();
+		}
 
 		const dec = new XChaCha20Poly1305();
 		let recovered: Uint8Array;
-		try { recovered = dec.decrypt(key, nonce, ct); }
-		finally { dec.dispose(); }
+		try {
+			recovered = dec.decrypt(key, nonce, ct);
+		} finally {
+			dec.dispose();
+		}
 
 		expect(bytesToHex(recovered!)).toBe(bytesToHex(pt));
 	});
@@ -524,13 +560,19 @@ describe('XChaCha20Poly1305', () => {
 
 		const enc = new XChaCha20Poly1305();
 		let ct: Uint8Array;
-		try { ct = enc.encrypt(key, nonce, pt, aad); }
-		finally { enc.dispose(); }
+		try {
+			ct = enc.encrypt(key, nonce, pt, aad);
+		} finally {
+			enc.dispose();
+		}
 
 		const dec = new XChaCha20Poly1305();
 		let recovered: Uint8Array;
-		try { recovered = dec.decrypt(key, nonce, ct, aad); }
-		finally { dec.dispose(); }
+		try {
+			recovered = dec.decrypt(key, nonce, ct, aad);
+		} finally {
+			dec.dispose();
+		}
 
 		expect(bytesToHex(recovered!)).toBe(bytesToHex(pt));
 	});
@@ -542,8 +584,11 @@ describe('XChaCha20Poly1305', () => {
 
 		const enc = new XChaCha20Poly1305();
 		let ct: Uint8Array;
-		try { ct = enc.encrypt(key, nonce, pt); }
-		finally { enc.dispose(); }
+		try {
+			ct = enc.encrypt(key, nonce, pt);
+		} finally {
+			enc.dispose();
+		}
 
 		const dec = new XChaCha20Poly1305();
 		try {
@@ -560,8 +605,11 @@ describe('XChaCha20Poly1305', () => {
 
 		const enc = new XChaCha20Poly1305();
 		let ct: Uint8Array;
-		try { ct = enc.encrypt(key, nonce, pt); }
-		finally { enc.dispose(); }
+		try {
+			ct = enc.encrypt(key, nonce, pt);
+		} finally {
+			enc.dispose();
+		}
 
 		const dec = new XChaCha20Poly1305();
 		try {
@@ -578,8 +626,11 @@ describe('XChaCha20Poly1305', () => {
 
 		const enc = new XChaCha20Poly1305();
 		let ct: Uint8Array;
-		try { ct = enc.encrypt(key, nonce, pt); }
-		finally { enc.dispose(); }
+		try {
+			ct = enc.encrypt(key, nonce, pt);
+		} finally {
+			enc.dispose();
+		}
 
 		const tampered = new Uint8Array(ct);
 		tampered[0] ^= 0xff;
@@ -600,8 +651,11 @@ describe('XChaCha20Poly1305', () => {
 
 		const enc = new XChaCha20Poly1305();
 		let ct: Uint8Array;
-		try { ct = enc.encrypt(key, nonce, pt, aad); }
-		finally { enc.dispose(); }
+		try {
+			ct = enc.encrypt(key, nonce, pt, aad);
+		} finally {
+			enc.dispose();
+		}
 
 		const dec = new XChaCha20Poly1305();
 		try {
@@ -618,10 +672,10 @@ describe('XChaCha20Poly1305', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Full end-to-end ceremony — KEM → HKDF → AEAD
+// Full end-to-end ceremony: KEM → HKDF → AEAD
 // ---------------------------------------------------------------------------
 
-describe('Full end-to-end ceremony — KEM → HKDF → AEAD', () => {
+describe('Full end-to-end ceremony: KEM → HKDF → AEAD', () => {
 	const enc  = new TextEncoder();
 	const info = enc.encode('leviathan-kyber-demo');
 	const aad  = enc.encode('kyber-demo');
@@ -646,13 +700,19 @@ describe('Full end-to-end ceremony — KEM → HKDF → AEAD', () => {
 
 		const aliceHkdf = new HKDF_SHA256();
 		let aliceKey: Uint8Array;
-		try { aliceKey = aliceHkdf.derive(aliceSS, salt, info, 32); }
-		finally { aliceHkdf.dispose(); }
+		try {
+			aliceKey = aliceHkdf.derive(aliceSS, salt, info, 32);
+		} finally {
+			aliceHkdf.dispose();
+		}
 
 		const bobHkdf = new HKDF_SHA256();
 		let bobKey: Uint8Array;
-		try { bobKey = bobHkdf.derive(bobSS, salt, info, 32); }
-		finally { bobHkdf.dispose(); }
+		try {
+			bobKey = bobHkdf.derive(bobSS, salt, info, 32);
+		} finally {
+			bobHkdf.dispose();
+		}
 
 		expect(bytesToHex(aliceKey!)).toBe(bytesToHex(bobKey!));
 
@@ -662,14 +722,20 @@ describe('Full end-to-end ceremony — KEM → HKDF → AEAD', () => {
 
 		const aliceAead = new XChaCha20Poly1305();
 		let ciphertext: Uint8Array;
-		try { ciphertext = aliceAead.encrypt(aliceKey, nonce, plaintext, aad); }
-		finally { aliceAead.dispose(); }
+		try {
+			ciphertext = aliceAead.encrypt(aliceKey, nonce, plaintext, aad);
+		} finally {
+			aliceAead.dispose();
+		}
 
 		// 4. Bob decrypts
 		const bobAead = new XChaCha20Poly1305();
 		let recovered: Uint8Array;
-		try { recovered = bobAead.decrypt(bobKey, nonce, ciphertext, aad); }
-		finally { bobAead.dispose(); }
+		try {
+			recovered = bobAead.decrypt(bobKey, nonce, ciphertext, aad);
+		} finally {
+			bobAead.dispose();
+		}
 
 		expect(bytesToHex(recovered!)).toBe(bytesToHex(plaintext));
 	});
@@ -686,7 +752,7 @@ describe('Full end-to-end ceremony — KEM → HKDF → AEAD', () => {
 			kemCt = encap.ciphertext;
 			bobSS = encap.sharedSecret;
 
-			// Tamper the KEM ciphertext — FO transform returns pseudorandom SS, no throw
+			// Tamper the KEM ciphertext; FO transform returns pseudorandom SS, no throw
 			const tampered = new Uint8Array(kemCt);
 			tampered[0] ^= 0xff;
 			badSS = kem.decapsulate(decapsulationKey, tampered);
@@ -694,7 +760,7 @@ describe('Full end-to-end ceremony — KEM → HKDF → AEAD', () => {
 			kem.dispose();
 		}
 
-		// badSS is a pseudorandom implicit-rejection value — not the correct SS
+		// badSS is a pseudorandom implicit-rejection value, not the correct SS
 		expect(bytesToHex(badSS)).not.toBe(bytesToHex(bobSS));
 
 		// 2. Derive keys from both SS values
@@ -702,13 +768,19 @@ describe('Full end-to-end ceremony — KEM → HKDF → AEAD', () => {
 
 		const goodHkdf = new HKDF_SHA256();
 		let goodKey: Uint8Array;
-		try { goodKey = goodHkdf.derive(bobSS, salt, info, 32); }
-		finally { goodHkdf.dispose(); }
+		try {
+			goodKey = goodHkdf.derive(bobSS, salt, info, 32);
+		} finally {
+			goodHkdf.dispose();
+		}
 
 		const badHkdf = new HKDF_SHA256();
 		let badKey: Uint8Array;
-		try { badKey = badHkdf.derive(badSS, salt, info, 32); }
-		finally { badHkdf.dispose(); }
+		try {
+			badKey = badHkdf.derive(badSS, salt, info, 32);
+		} finally {
+			badHkdf.dispose();
+		}
 
 		// 3. Sender encrypts with the good key; attacker tries to decrypt with bad key
 		const plaintext = enc.encode('secret message');
@@ -716,8 +788,11 @@ describe('Full end-to-end ceremony — KEM → HKDF → AEAD', () => {
 
 		const senderAead = new XChaCha20Poly1305();
 		let ct: Uint8Array;
-		try { ct = senderAead.encrypt(goodKey, nonce, plaintext, aad); }
-		finally { senderAead.dispose(); }
+		try {
+			ct = senderAead.encrypt(goodKey, nonce, plaintext, aad);
+		} finally {
+			senderAead.dispose();
+		}
 
 		const attackerAead = new XChaCha20Poly1305();
 		try {

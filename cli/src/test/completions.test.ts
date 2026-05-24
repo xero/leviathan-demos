@@ -18,10 +18,10 @@ describe('getCompletions', () => {
 
 	describe('value-consuming flags', () => {
 		it('prev=-c offers cipher values', () => {
-			expect(getCompletions(['lvthn', 'encrypt', '-c', ''])).toEqual(['serpent', 'chacha']);
+			expect(getCompletions(['lvthn', 'encrypt', '-c', ''])).toEqual(['serpent', 'chacha', 'aes']);
 		});
 		it('prev=--cipher offers cipher values', () => {
-			expect(getCompletions(['lvthn', 'encrypt', '--cipher', ''])).toEqual(['serpent', 'chacha']);
+			expect(getCompletions(['lvthn', 'encrypt', '--cipher', ''])).toEqual(['serpent', 'chacha', 'aes']);
 		});
 		it('prev=-k requests files', () => {
 			expect(getCompletions(['lvthn', 'encrypt', '-k', ''])).toEqual(['__files__']);

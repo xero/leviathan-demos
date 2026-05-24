@@ -1,38 +1,48 @@
 /**
- * format.ts — LVTHNCLI binary format read/write.
+ * format.ts: LVTHN binary format read/write.
  *
- * Outer header layout (44 bytes):
- *   0-7:   magic   "LVTHNCLI"
- *   8:     version 0x02
- *   9:     cipher  0x01=Serpent-256-CBC+HMAC-SHA256, 0x02=XChaCha20-Poly1305
- *   10:    kdf     0x01=scrypt, 0x02=keyfile
- *   11:    flags   0x00 (reserved)
- *   12-43: salt    32 bytes; zeroed for keyfile mode
- *   44+:   payload pool output
+ * Outer header layout (41 bytes):
+ *   0-4:   magic   "LVTHN"
+ *   5:     version 0x03 (tracks leviathan-crypto v3 wire format)
+ *   6:     cipher  0x01=Serpent-256-CBC+HMAC-SHA256, 0x02=XChaCha20-Poly1305,
+ *                  0x03=AES-256-GCM-SIV
+ *   7:     kdf     0x01=scrypt, 0x02=keyfile
+ *   8:     flags   0x00 (reserved)
+ *   9-40:  salt    32 bytes; zeroed for keyfile mode
+ *   41+:   payload pool output
+ *
+ * v0x03 is incompatible with v0x02 on the wire. The upstream lib's
+ * v3 release flipped Serpent byte order to NIST-natural and rebuilt
+ * the XChaCha20 sealstream derivation for key commitment, so v2 blobs
+ * can no longer decrypt under v3 even with the same key. The CLI
+ * version byte is bumped to mirror this break, and the magic was
+ * shortened from "LVTHNCLI" (8 bytes) to "LVTHN" (5 bytes) to share
+ * one format across the CLI and web demos.
  */
 
-export const MAGIC          = new Uint8Array([0x4c, 0x56, 0x54, 0x48, 0x4e, 0x43, 0x4c, 0x49]); // "LVTHNCLI"
-export const FORMAT_VERSION = 0x02;
-export const HEADER_SIZE    = 44;
+export const MAGIC          = new Uint8Array([0x4c, 0x56, 0x54, 0x48, 0x4e]); // "LVTHN"
+export const FORMAT_VERSION = 0x03;
+export const HEADER_SIZE    = 41;
 
-export const OFF_MAGIC   = 0;   // 8 bytes
-export const OFF_VERSION = 8;   // 1 byte
-export const OFF_CIPHER  = 9;   // 1 byte — cipher type
-export const OFF_KDF     = 10;  // 1 byte
-export const OFF_FLAGS   = 11;  // 1 byte — reserved
-export const OFF_SALT    = 12;  // 32 bytes
-export const OFF_PAYLOAD = 44;  // pool output starts here
+export const OFF_MAGIC   = 0;   // 5 bytes
+export const OFF_VERSION = 5;   // 1 byte
+export const OFF_CIPHER  = 6;   // 1 byte, cipher type
+export const OFF_KDF     = 7;   // 1 byte
+export const OFF_FLAGS   = 8;   // 1 byte, reserved
+export const OFF_SALT    = 9;   // 32 bytes
+export const OFF_PAYLOAD = 41;  // pool output starts here
 
 export const CIPHER_SERPENT = 0x01;
 export const CIPHER_CHACHA  = 0x02;
+export const CIPHER_AES     = 0x03;
 
 export const KDF_SCRYPT  = 0x01;
 export const KDF_KEYFILE = 0x02;
 
-export const ARMOR_BEGIN = '-----BEGIN LVTHNCLI ENCRYPTED MESSAGE-----';
-export const ARMOR_END   = '-----END LVTHNCLI ENCRYPTED MESSAGE-----';
-export const KEY_BEGIN   = '-----BEGIN LVTHNCLI KEY-----';
-export const KEY_END     = '-----END LVTHNCLI KEY-----';
+export const ARMOR_BEGIN = '-----BEGIN LVTHN ENCRYPTED MESSAGE-----';
+export const ARMOR_END   = '-----END LVTHN ENCRYPTED MESSAGE-----';
+export const KEY_BEGIN   = '-----BEGIN LVTHN KEY-----';
+export const KEY_END     = '-----END LVTHN KEY-----';
 
 export interface LvthnHeader {
 	version: number;
@@ -58,16 +68,16 @@ export function decodeBlob(
 	blob: Uint8Array,
 ): { header: LvthnHeader; poolOutput: Uint8Array } {
 	if (blob.length < HEADER_SIZE)
-		throw new Error('File too short to be a valid LVTHNCLI file');
+		throw new Error('File too short to be a valid LVTHN file');
 	for (let i = 0; i < MAGIC.length; i++) {
 		if (blob[OFF_MAGIC + i] !== MAGIC[i])
-			throw new Error('Not an LVTHNCLI file (magic bytes mismatch)');
+			throw new Error('Not an LVTHN file (magic bytes mismatch)');
 	}
 	const version = blob[OFF_VERSION];
 	if (version !== FORMAT_VERSION)
-		throw new Error(`unsupported format version 0x${version.toString(16).padStart(2, '0')} — this file was encrypted with an older version of lvthn`);
+		throw new Error(`unsupported format version 0x${version.toString(16).padStart(2, '0')}: this file was encrypted with an incompatible version of lvthn (current: 0x${FORMAT_VERSION.toString(16).padStart(2, '0')})`);
 	const cipher = blob[OFF_CIPHER];
-	if (cipher !== CIPHER_SERPENT && cipher !== CIPHER_CHACHA)
+	if (cipher !== CIPHER_SERPENT && cipher !== CIPHER_CHACHA && cipher !== CIPHER_AES)
 		throw new Error(`Unsupported cipher: 0x${cipher.toString(16).padStart(2, '0')}`);
 	const kdf = blob[OFF_KDF];
 	if (kdf !== KDF_SCRYPT && kdf !== KDF_KEYFILE)
@@ -90,7 +100,7 @@ export function isArmored(data: Uint8Array): boolean {
 }
 
 export function armor(data: Uint8Array): string {
-	// Chunked encode — prevents call stack overflow on large files
+	// Chunked encode, prevents call stack overflow on large files
 	let binary = '';
 	const chunk = 8192;
 	for (let i = 0; i < data.length; i += chunk) {

@@ -134,7 +134,7 @@ function addNullFrame(ssBytes) {
 		<div class="wire-frame-head">
 			<span class="wire-dir">&nbsp;</span>
 			<span class="wire-label">ss</span>
-			<span class="wire-size">—</span>
+			<span class="wire-size">-</span>
 			<span class="wire-annotation">shared secret (derived independently, never transmitted)</span>
 		</div>
 		<div class="wire-frame-body">

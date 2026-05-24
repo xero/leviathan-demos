@@ -13,6 +13,11 @@
 > Each project in this repository is a working application that can be used
 > directly or read as an implementation reference.
 
+> [!NOTE]
+> Each demo's wire format tracks the matching version of leviathan-crypto.
+> A demo's release version always corresponds to the leviathan-crypto release
+> it was built against.
+
 ## Projects
 
 ### `cli`
@@ -20,11 +25,12 @@
 
 **The tool to install if you just want something to use.**
 
-Supports both Serpent-256-CBC+HMAC-SHA256 and XChaCha20-Poly1305, selectable
-via the `--cipher` flag. A single keyfile is compatible with both ciphers; the
-header byte determines decryption automatically. Encryption and decryption
-distribute 64KB chunks across a worker pool sized to `hardwareConcurrency`.
-Each worker owns an isolated WASM instance with no shared memory between workers.
+Supports Serpent-256-CBC+HMAC-SHA256, XChaCha20-Poly1305, and AES-256-GCM-SIV,
+selectable via the `--cipher` flag. A single keyfile is compatible with all
+three ciphers; the header byte determines decryption automatically. Encryption
+and decryption distribute 64KB chunks across a worker pool sized to
+`hardwareConcurrency`. Each worker owns an isolated WASM instance with no
+shared memory between workers.
 
 ```sh
 bun add -g lvthn # or npm install -g lvthn
@@ -73,14 +79,14 @@ open dist/index.html
 #### browser-based encryption tool
 
 A single, self-contained HTML file powers this demo. Encrypt text or files
-using Serpent-256-CBC and Argon2id key derivation, then share the armored
+using Serpent-256-CBC and scrypt key derivation, then share the armored
 output. No server, installation, or network connection required after initial
 load. The code is written to be read. The Encrypt-then-MAC construction, HMAC
-input (header with HMAC field zeroed + ciphertext), and Argon2id parameters are
+input (header with HMAC field zeroed + ciphertext), and scrypt parameters are
 all intentional examples worth reading.
 
 ```sh
-cd web && bun install && bun run build.ts
+cd web && bun install && bun bake
 open dist/index.html
 ```
 
@@ -90,25 +96,56 @@ open dist/index.html
 
 ---
 
-### `chat`
-#### end-to-end encrypted chat
+### `tamper`
+#### crypto attack-resilience demo
 
-End-to-end encrypted chat featuring two-party messaging over X25519 key
-exchange and XChaCha20-Poly1305 message encryption. The relay server functions
-as a dumb WebSocket pipe that never sees plaintext. Each message incorporates
-sequence numbers, which allows the system to detect and reject replayed messages
-from an attacker. The demo deconstructs the protocol step by step, with visual
-feedback for both injection and replays.
+A working two-party encrypted channel that you then attack. Forge a replay and
+watch the sequence check reject it. Tamper with a frame and watch the Poly1305
+tag fail. The demo deconstructs the protocol step by step, with visual feedback
+for injection and replay attacks, so you see the cryptography catch an attacker
+in real time. Key exchange uses X25519 with HKDF-SHA256, message encryption uses
+XChaCha20-Poly1305, and the relay server is a dumb WebSocket pipe that never
+sees plaintext. Every primitive comes from leviathan-crypto, with no external
+dependency.
+
+> [!TIP]
+> This is a teaching demo. For a real, production-ready secure messenger built
+> on the same library, see [covcom](https://github.com/xero/covcom).
 
 ```sh
-cd chat && bun install
-cd server && bun run server.ts &
-open client/lvthn-chat.html
+cd tamper && bun install && bun bake
+bun run server/server.ts &
+open dist/index.html
 ```
 
-→ [chat/README.md](./chat/README.md)
+→ [tamper/README.md](./tamper/README.md)
 
-→ [browser demo](https://leviathan.3xi.club/chat)
+→ [browser demo](https://leviathan.3xi.club/tamper)
+
+---
+
+### `jwt`
+#### classical and post-quantum json web token signing demo
+
+**The demo to show someone who wants to know what post-quantum signatures cost.**
+
+A single, self-contained HTML file signs and verifies JSON Web Tokens across
+eleven algorithms: classical EdDSA and ES256, post-quantum ML-DSA and SLH-DSA,
+and the leviathan hybrid composites. The same claims signed with Ed25519 produce
+a token of about 220 bytes; signed with SLH-DSA-SHAKE-256f, the same token runs
+past 66 kilobytes. Pick an algorithm, generate a keypair, edit the claims, and
+sign. The token renders with its three segments color-coded and a live byte
+readout. Then tamper with the payload and watch verification reject it. Every
+algorithm runs through one uniform path on the leviathan `Sign` suite API.
+
+```sh
+cd jwt && bun install && bun bake
+open dist/index.html
+```
+
+→ [jwt/README.md](./jwt/README.md)
+
+→ [browser demo](https://leviathan.3xi.club/jwt)
 
 ---
 
@@ -133,7 +170,8 @@ leviathan-demos/
 ├── cli/                 # published CLI tool (npm: lvthn)
 ├── kyber/               # ML-KEM post-quantum key establishment demo
 ├── web/                 # single-file browser encryption tool
-├── chat/                # E2E encrypted chat demo
+├── tamper/              # crypto attack-resilience demo
+├── jwt/                 # classical and post-quantum JWT signing demo
 ├── package.json         # workspace root (lint tools only)
 └── tsconfig.base.json   # shared TypeScript base config
 ```

@@ -1,161 +1,42 @@
-const hashArgon2id = await loadArgon2id();
+// lvthn-web UI controller.
+// Wire format is LVTHNCLI v3, byte-compatible with the lvthn CLI. See
+// cli/FORMAT.md for the on-disk layout. Crypto helpers live in
+// format.js / crypto.js / cipher-suites.js, all inlined into the same
+// <script type="module"> as this file via build.ts.
 
-// Argon2id OWASP 2023 minimum: 19 MiB, 2 passes, 1 thread
-const ARGON2_MEMORY      = 19456;
-const ARGON2_PASSES      = 2;
-const ARGON2_PARALLELISM = 1;
-
-// ============================================================
-// LVTHN WEB FORMAT v2 SPECIFICATION
-// ===================================
-// Binary blob layout:
-//   [ magic:   4 bytes ] "LVWB" (0x4c, 0x56, 0x57, 0x42)
-//   [ version: 1 byte  ] 0x02
-//   [ kdf:     1 byte  ] 0x02=keyfile, 0x03=argon2id-passphrase
-//   [ salt:    32 bytes] Argon2id salt (zeroed for keyfile mode)
-//   [ sealed:  N bytes ] SerpentSeal output — IV(16) || ciphertext || HMAC(32)
-//
-// Header size: 38 bytes (4+1+1+32). No separate IV or HMAC fields — SerpentSeal owns those.
-//
-// Key derivation:
-//   Passphrase  → Argon2id → 64 bytes (tagLength: 64)
-//   Keyfile     → HKDF-SHA256(keyfileBytes, salt=zero32, info="lvthn-v2-key") → 64 bytes
-//   Generate    → 64 random bytes from WebCrypto
-//
-// Armored (text) output:
-//   -----BEGIN LVTHN ENCRYPTED MESSAGE-----
-//   <base64, 64 chars/line>
-//   -----END LVTHN ENCRYPTED MESSAGE-----
-//
-// File output: raw binary blob, .lvthn extension
-// ============================================================
-
-// ── Format constants ──────────────────────────────────────
-const OFF_MAGIC      = 0;   // 4 bytes
-const OFF_VERSION    = 4;   // 1 byte
-const OFF_KDF        = 5;   // 1 byte
-const OFF_SALT       = 6;   // 32 bytes
-const OFF_SEALED     = 38;  // N bytes — SerpentSeal output
-
-const MAGIC          = [0x4c, 0x56, 0x57, 0x42]; // "LVWB"
-const FORMAT_VERSION = 0x02;
-const KDF_KEYFILE    = 0x02;
-const KDF_ARGON2ID   = 0x03;
-
-const ARMOR_BEGIN = '-----BEGIN LVTHN ENCRYPTED MESSAGE-----';
-const ARMOR_END   = '-----END LVTHN ENCRYPTED MESSAGE-----';
-
-// ── DOM Helper ────────────────────────────────────────────
+// ── DOM helper ─────────────────────────────────────────────
 function $(i) { return document.getElementById(i); }
-
-// ── Format encode/decode ──────────────────────────────────
-function encodeBlob(kdf, salt, sealed) {
-	const buf = new Uint8Array(OFF_SEALED+ sealed.length);
-	buf[OFF_MAGIC]   = MAGIC[0]; buf[1] = MAGIC[1]; buf[2] = MAGIC[2]; buf[3] = MAGIC[3];
-	buf[OFF_VERSION] = FORMAT_VERSION;
-	buf[OFF_KDF]     = kdf;
-	buf.set(salt,   OFF_SALT);
-	buf.set(sealed, OFF_SEALED);
-	return buf;
-}
-
-function decodeBlob(blob) {
-	if (blob.length < OFF_SEALED) throw new Error('file too short to be a valid LVTHN file');
-	if (blob[0] !== MAGIC[0] || blob[1] !== MAGIC[1] || blob[2] !== MAGIC[2] || blob[3] !== MAGIC[3]) {
-		throw new Error('not an LVTHN file (magic bytes mismatch)');
-	}
-	if (blob[OFF_VERSION] !== FORMAT_VERSION)
-		throw new Error('unsupported format version — this file was encrypted with an older version of lvthn-web');
-	const kdf = blob[OFF_KDF];
-	if (kdf !== KDF_KEYFILE && kdf !== KDF_ARGON2ID) throw new Error('unsupported KDF');
-	return {
-		kdf,
-		salt:   blob.slice(OFF_SALT,   OFF_SALT + 32),
-		sealed: blob.slice(OFF_SEALED),
-	};
-}
-
-function isArmored(data) {
-	const prefix = new TextDecoder().decode(data.slice(0, ARMOR_BEGIN.length));
-	return prefix === ARMOR_BEGIN;
-}
-
-// Chunk-based btoa to avoid call-stack overflow on large inputs
-function uint8ToBase64(bytes) {
-	let binary = '';
-	const chunk = 8192;
-	for (let i = 0; i < bytes.length; i += chunk) {
-		binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
-	}
-	return btoa(binary);
-}
-
-function armorBlob(blob) {
-	const b64 = uint8ToBase64(blob);
-	const lines = [];
-	for (let i = 0; i < b64.length; i += 64) lines.push(b64.slice(i, i + 64));
-	return `${ARMOR_BEGIN}\n${lines.join('\n')}\n${ARMOR_END}\n`;
-}
-
-function dearmorBlob(text) {
-	const lines = text.trim().split('\n');
-	if (lines[0].trim() !== ARMOR_BEGIN) throw new Error('missing armor header');
-	const endIdx = lines.findIndex(l => l.trim() === ARMOR_END);
-	if (endIdx === -1) throw new Error('missing armor footer');
-	const b64 = lines.slice(1, endIdx).join('');
-	const binary = atob(b64);
-	const result = new Uint8Array(binary.length);
-	for (let i = 0; i < binary.length; i++) result[i] = binary.charCodeAt(i);
-	return result;
-}
-
-// ── Crypto ───────────────────────────────────────────────
-function sealEncrypt(key, plaintext) {
-	return Seal.encrypt(SerpentCipher, key, plaintext);
-}
-function sealDecrypt(key, sealed) {
-	return Seal.decrypt(SerpentCipher, key, sealed);
-}
-
-// HKDF-SHA256: expand any keyfile to 64 bytes
-function deriveKeyfileKey(keyfileBytes) {
-	const h = new HKDF_SHA256();
-	try {
-		return h.derive(keyfileBytes, new Uint8Array(32), utf8ToBytes('lvthn-v2-key'), 32);
-	} finally {
-		h.dispose();
-	}
-}
 
 // ── Application state ─────────────────────────────────────
 const state = {
-	mode:     'encrypt',    // 'encrypt' | 'decrypt'
-	revealed: false,         // false = initial hero; true = workspace
+	mode:     'encrypt',     // 'encrypt' | 'decrypt'
+	revealed: false,
 
-	inputType:  'text',       // 'text' | 'file'
-	keyType:    'passphrase', // 'passphrase' | 'keyfile' | 'generate'
+	inputType: 'text',       // 'text' | 'file'
+	keyType:   'passphrase', // 'passphrase' | 'keyfile' | 'generate'
+	cipher:    'serpent',    // 'serpent' | 'chacha' | 'aes' (encrypt only; decrypt reads from header)
 
 	inputText:  '',
 	inputFile:  null,
 
 	passphrase:   '',
 	keyfileData:  null,       // { name, bytes }
-	keyInputMode: 'file',    // 'file' | 'hex'
+	keyInputMode: 'file',     // 'file' | 'hex'
 	keyHexInput:  '',
 	keyHexError:  '',
 
-	keygenBytes: null,        // Uint8Array (64 bytes)
+	keygenBytes: null,        // Uint8Array (32 bytes)
 
-	outputBlob:    null,
-	outputArmored: '',
-	outputText:    '',
+	outputBlob:     null,
+	outputArmored:  '',
+	outputText:     '',
 	outputFilename: '',
 	outputSrcSize:  0,
 
-	status:   'idle',        // 'idle' | 'working' | 'done' | 'error'
+	status:   'idle',         // 'idle' | 'working' | 'done' | 'error'
 	errorMsg: '',
 	showPP:   false,
-	dlFormat: 'armored',     // 'armored' | 'binary'
+	dlFormat: 'armored',      // 'armored' | 'binary'
 };
 
 // ── Helpers ───────────────────────────────────────────────
@@ -170,6 +51,7 @@ function parseKeyHex(hex) {
 	if (h.length === 0) return { error: 'empty' };
 	if (h.length % 2 !== 0) return { error: 'odd number of hex characters' };
 	if (!/^[0-9a-f]+$/.test(h)) return { error: 'invalid hex characters' };
+	if (h.length !== 64) return { error: `expected 64 hex chars (32 bytes), got ${h.length}` };
 	return { bytes: hexToBytes(h) };
 }
 
@@ -210,6 +92,19 @@ async function copyText(text, btn) {
 	}
 }
 
+// Returns the raw 32-byte key for keyfile mode, throwing on invalid input.
+// Accepts either raw 32-byte buffer or LVTHNCLI armored key (PEM).
+function resolveKeyfileBytes(bytes) {
+	let raw = bytes;
+	if (isArmoredKey(bytes)) {
+		raw = dearmorKey(new TextDecoder().decode(bytes));
+	}
+	if (raw.length !== 32) {
+		throw new Error(`invalid keyfile size: ${raw.length} bytes (expected 32)`);
+	}
+	return raw;
+}
+
 // ── Validation ─────────────────────────────────────────────
 function getActionHint() {
 	const noInput = state.inputType === 'text' ? !state.inputText.trim() : !state.inputFile;
@@ -224,11 +119,9 @@ function getActionHint() {
 function render() {
 	const enc = state.mode === 'encrypt';
 
-	// Progressive reveal
 	$('mode-select').classList.toggle('hidden', state.revealed);
 	$('workspace').classList.toggle('hidden', !state.revealed);
 
-	// Mode buttons (compact header toggle)
 	$('btn-encrypt').classList.toggle('active', enc);
 	$('btn-decrypt').classList.toggle('active', !enc);
 
@@ -238,6 +131,13 @@ function render() {
 		state.keyType = 'passphrase';
 		document.querySelector('input[name=ktype][value=passphrase]').checked = true;
 	}
+
+	// Cipher panel: encrypt mode only
+	$('sec-cipher').classList.toggle('hidden', !enc);
+	document.querySelectorAll('.cipher-radio-label').forEach(lbl => {
+		const val = lbl.querySelector('input').value;
+		lbl.classList.toggle('checked', val === state.cipher);
+	});
 
 	// Key radio labels styling
 	document.querySelectorAll('.key-radio-label').forEach(lbl => {
@@ -251,7 +151,6 @@ function render() {
 	$('tab-text').classList.toggle('active', state.inputType === 'text');
 	$('tab-file').classList.toggle('active', state.inputType === 'file');
 
-	// Textarea placeholder
 	$('input-text').placeholder = enc ? 'paste text or type message...' : 'paste encrypted message...';
 
 	// Key sections
@@ -259,7 +158,6 @@ function render() {
 	$('sec-keyfile').classList.toggle('hidden', state.keyType !== 'keyfile');
 	$('sec-generate').classList.toggle('hidden', state.keyType !== 'generate');
 
-	// Passphrase show/hide
 	const ppField = $('pp-input');
 	ppField.type = state.showPP ? 'text' : 'password';
 	$('btn-show-pp').textContent = state.showPP ? '[hide]' : '[show]';
@@ -289,13 +187,11 @@ function render() {
 		fileInfo.classList.add('hidden');
 	}
 
-	// FILE/HEX tab active state
 	$('kf-tab-file').classList.toggle('active', state.keyInputMode === 'file');
 	$('kf-tab-hex').classList.toggle('active',  state.keyInputMode === 'hex');
 	$('kf-file-section').classList.toggle('hidden', state.keyInputMode !== 'file');
 	$('kf-hex-section').classList.toggle('hidden',  state.keyInputMode !== 'hex');
 
-	// Keyfile drop zone
 	const kfDrop = $('kf-drop');
 	const kfInfo = $('kf-info');
 	if (state.keyInputMode === 'file' && state.keyfileData) {
@@ -308,15 +204,13 @@ function render() {
 		kfInfo.classList.add('hidden');
 	}
 
-	// Hex status
 	const hexStatusEl = $('kf-hex-status');
 	if (state.keyInputMode === 'hex') {
 		if (state.keyHexError) {
 			hexStatusEl.textContent = state.keyHexError;
 			hexStatusEl.className = 'strength weak';
 		} else if (state.keyfileData) {
-			const bits = state.keyfileData.bytes.length * 8;
-			hexStatusEl.textContent = '✓ ' + bits + '-bit key (→ HKDF-SHA256 → 32 bytes)';
+			hexStatusEl.textContent = '✓ 256-bit key loaded';
 			hexStatusEl.className = 'strength strong';
 		} else {
 			hexStatusEl.textContent = '';
@@ -337,7 +231,6 @@ function render() {
 		actionHint.textContent = hint || '';
 	}
 
-	// Output panel
 	renderOutput();
 }
 
@@ -359,7 +252,6 @@ function renderOutput() {
 	}
 	panel.classList.remove('error');
 
-	// Done
 	if (enc) {
 		if (state.inputType === 'text') {
 			body.innerHTML = `
@@ -429,40 +321,42 @@ async function doEncrypt() {
 	render();
 	await new Promise(r => setTimeout(r, 0));
 
+	let pool = null;
 	try {
 		const plaintext = state.inputType === 'text'
 			? new TextEncoder().encode(state.inputText)
 			: state.inputFile.bytes;
 
-		let key64, kdf, salt;
+		let key, kdf, salt;
 		if (state.keyType === 'passphrase') {
-			kdf  = KDF_ARGON2ID;
-			salt = crypto.getRandomValues(new Uint8Array(32));
-			key64 = hashArgon2id({
-				password:    new TextEncoder().encode(state.passphrase),
-				salt,
-				parallelism: ARGON2_PARALLELISM,
-				passes:      ARGON2_PASSES,
-				memorySize:  ARGON2_MEMORY,
-				tagLength:   32,
-			});
+			kdf = KDF_SCRYPT;
+			const derived = deriveKey(state.passphrase);
+			key  = derived.key;
+			salt = derived.salt;
 		} else if (state.keyType === 'generate') {
 			if (!state.keygenBytes) throw new Error('generate a key first');
-			kdf   = KDF_KEYFILE;
-			salt  = new Uint8Array(32);
-			key64 = deriveKeyfileKey(state.keygenBytes);
+			kdf  = KDF_KEYFILE;
+			salt = new Uint8Array(32);
+			key  = state.keygenBytes;
 		} else {
-			// keyfile — HKDF expand to 64 bytes
-			kdf   = KDF_KEYFILE;
-			salt  = new Uint8Array(32);
-			key64 = deriveKeyfileKey(state.keyfileData.bytes);
+			kdf  = KDF_KEYFILE;
+			salt = new Uint8Array(32);
+			key  = resolveKeyfileBytes(state.keyfileData.bytes);
 		}
 
-		const sealed = sealEncrypt(key64, plaintext);
-		const blob   = encodeBlob(kdf, salt, sealed);
+		const suite      = cipherSuiteFor(state.cipher);
+		const wasm       = wasmFor(state.cipher);
+		const cipherByte = cipherByteFor(state.cipher);
+
+		pool = await SealStreamPool.create(suite, key, { wasm, chunkSize: 65536, workers: 1 });
+		const poolOutput = await pool.seal(plaintext);
+		const blob = encodeBlob(
+			{ version: FORMAT_VERSION, cipher: cipherByte, kdf, flags: 0x00, salt },
+			poolOutput,
+		);
 
 		state.outputBlob     = blob;
-		state.outputArmored  = armorBlob(blob);
+		state.outputArmored  = armor(blob);
 		state.outputFilename = state.inputType === 'file'
 			? (state.inputFile.name + '.lvthn')
 			: 'encrypted.lvthn';
@@ -471,6 +365,10 @@ async function doEncrypt() {
 	} catch (e) {
 		state.errorMsg = `${e.message}`;
 		state.status   = 'error';
+	} finally {
+		if (pool) {
+			try { pool.destroy(); } catch (_) { /* ignore */ }
+		}
 	}
 	render();
 }
@@ -481,6 +379,7 @@ async function doDecrypt() {
 	render();
 	await new Promise(r => setTimeout(r, 0));
 
+	let pool = null;
 	try {
 		let inputBytes;
 		if (state.inputType === 'text') {
@@ -489,27 +388,33 @@ async function doDecrypt() {
 			inputBytes = state.inputFile.bytes;
 		}
 
-		const blob = isArmored(inputBytes) ? dearmorBlob(new TextDecoder().decode(inputBytes)) : inputBytes;
-		const { kdf, salt, sealed } = decodeBlob(blob);
+		const blob = isArmored(inputBytes)
+			? dearmor(new TextDecoder().decode(inputBytes))
+			: inputBytes;
+		const { header, poolOutput } = decodeBlob(blob);
 
-		let key64;
-		if (kdf === KDF_ARGON2ID) {
-			if (!state.passphrase) throw new Error('passphrase required for this file');
-			key64 = hashArgon2id({
-				password:    new TextEncoder().encode(state.passphrase),
-				salt,
-				parallelism: ARGON2_PARALLELISM,
-				passes:      ARGON2_PASSES,
-				memorySize:  ARGON2_MEMORY,
-				tagLength:   32,
-			});
+		if (header.kdf === KDF_SCRYPT && state.keyType !== 'passphrase')
+			throw new Error('passphrase required for this file');
+		if (header.kdf === KDF_KEYFILE && state.keyType === 'passphrase')
+			throw new Error('keyfile required for this file');
+
+		let key;
+		if (header.kdf === KDF_SCRYPT) {
+			const derived = deriveKey(state.passphrase, header.salt);
+			key = derived.key;
+		} else if (state.keyType === 'generate') {
+			if (!state.keygenBytes) throw new Error('keyfile required for this file');
+			key = state.keygenBytes;
 		} else {
-			if (!state.keyfileData) throw new Error('keyfile required for this file');
-			key64 = deriveKeyfileKey(state.keyfileData.bytes);
+			key = resolveKeyfileBytes(state.keyfileData.bytes);
 		}
 
-		// sealDecrypt throws on authentication failure — no manual HMAC needed
-		const plaintext = sealDecrypt(key64, sealed);
+		const cipherName = cipherNameFromByte(header.cipher);
+		const suite      = cipherSuiteFor(cipherName);
+		const wasm       = wasmFor(cipherName);
+
+		pool = await SealStreamPool.create(suite, key, { wasm, chunkSize: 65536, workers: 1 });
+		const plaintext = await pool.open(poolOutput);
 
 		state.outputBlob = plaintext;
 		if (state.inputType === 'file') {
@@ -519,15 +424,19 @@ async function doDecrypt() {
 		}
 		state.status = 'done';
 	} catch (e) {
-		const msg = e.message;
+		const msg = e.message || '';
 		if (e instanceof AuthenticationError) {
-			state.errorMsg = 'authentication failed — wrong key or tampered data';
-		} else if (msg.includes('magic') || msg.includes('format') || msg.includes('LVTHN') || msg.includes('armor') || msg.includes('version')) {
-			state.errorMsg = 'unrecognized format — not a leviathan encrypted file';
+			state.errorMsg = 'authentication failed: wrong key or tampered data';
+		} else if (msg.includes('magic') || msg.includes('LVTHN') || msg.includes('armor') || msg.includes('version') || msg.includes('cipher') || msg.includes('KDF')) {
+			state.errorMsg = `unrecognized format: ${msg}`;
 		} else {
-			state.errorMsg = `${msg}`;
+			state.errorMsg = msg;
 		}
 		state.status = 'error';
+	} finally {
+		if (pool) {
+			try { pool.destroy(); } catch (_) { /* ignore */ }
+		}
 	}
 	render();
 }
@@ -559,89 +468,98 @@ async function handleFile(file, callback) {
 
 // ── Event wiring ───────────────────────────────────────────
 function setupApp() {
-	// Mode toggle
+	function clearOutput() {
+		state.status = 'idle';
+		state.outputBlob = null;
+		state.outputArmored = '';
+		state.outputText = '';
+		state.errorMsg = '';
+	}
+
 	$('btn-encrypt').addEventListener('click', () => {
 		state.revealed = true;
 		if (state.mode === 'encrypt') { render(); return; }
-		state.mode = 'encrypt'; state.status = 'idle';
-		state.outputBlob = null; state.outputArmored = ''; state.outputText = ''; state.errorMsg = '';
+		state.mode = 'encrypt';
+		clearOutput();
 		state.keyInputMode = 'file'; state.keyHexInput = ''; state.keyHexError = '';
 		render();
 	});
 	$('btn-decrypt').addEventListener('click', () => {
 		state.revealed = true;
 		if (state.mode === 'decrypt') { render(); return; }
-		state.mode = 'decrypt'; state.status = 'idle';
-		state.outputBlob = null; state.outputArmored = ''; state.outputText = ''; state.errorMsg = '';
+		state.mode = 'decrypt';
+		clearOutput();
 		state.keyInputMode = 'file'; state.keyHexInput = ''; state.keyHexError = '';
 		render();
 	});
 	$('hero-encrypt').addEventListener('click', () => $('btn-encrypt').click());
 	$('hero-decrypt').addEventListener('click', () => $('btn-decrypt').click());
 
-	// Input type toggle
 	$('tab-text').addEventListener('click', () => {
 		if (state.inputType === 'text') return;
 		state.inputType = 'text'; state.inputFile = null;
-		state.status = 'idle'; state.outputBlob = null; state.outputArmored = ''; state.outputText = ''; state.errorMsg = '';
+		clearOutput();
 		render();
 	});
 	$('tab-file').addEventListener('click', () => {
 		if (state.inputType === 'file') return;
 		state.inputType = 'file'; state.inputText = '';
-		state.status = 'idle'; state.outputBlob = null; state.outputArmored = ''; state.outputText = ''; state.errorMsg = '';
+		clearOutput();
 		$('input-text').value = '';
 		render();
 	});
 
-	// Text input
 	$('input-text').addEventListener('input', e => {
 		state.inputText = e.target.value;
 		$('char-count').textContent = e.target.value.length;
-		if (state.status !== 'idle') { state.status = 'idle'; state.outputBlob = null; }
+		if (state.status !== 'idle') clearOutput();
 		render();
 	});
 
-	// File input drop zone
 	setupDropZone('drop-zone', 'file-picker', data => {
 		state.inputFile = data;
-		state.status = 'idle'; state.outputBlob = null; state.errorMsg = '';
+		clearOutput();
 		render();
 	});
 	$('clear-file').addEventListener('click', () => {
-		state.inputFile = null; state.status = 'idle'; render();
+		state.inputFile = null; clearOutput(); render();
 	});
 
-	// Key type radio
-	document.querySelectorAll('input[name=ktype]').forEach(radio => {
+	// Cipher selector
+	document.querySelectorAll('input[name=cipher]').forEach(radio => {
 		radio.addEventListener('change', () => {
-			state.keyType = radio.value;
-			state.status = 'idle'; state.outputBlob = null; state.errorMsg = '';
+			state.cipher = radio.value;
+			clearOutput();
 			render();
 		});
 	});
 
-	// Passphrase input
+	document.querySelectorAll('input[name=ktype]').forEach(radio => {
+		radio.addEventListener('change', () => {
+			state.keyType = radio.value;
+			clearOutput();
+			render();
+		});
+	});
+
 	$('pp-input').addEventListener('input', e => {
 		state.passphrase = e.target.value;
-		if (state.status !== 'idle') { state.status = 'idle'; state.outputBlob = null; }
+		if (state.status !== 'idle') clearOutput();
 		render();
 	});
 	$('btn-show-pp').addEventListener('click', () => {
 		state.showPP = !state.showPP; render();
 	});
 
-	// Keyfile drop zone
 	setupDropZone('kf-drop', 'kf-picker', data => {
 		state.keyfileData = data;
-		state.status = 'idle'; state.outputBlob = null; state.errorMsg = '';
+		clearOutput();
 		render();
 	});
 	$('clear-kf').addEventListener('click', () => {
-		state.keyfileData = null; state.status = 'idle'; render();
+		state.keyfileData = null; clearOutput(); render();
 	});
 
-	// FILE/HEX tab toggle
 	$('kf-tab-file').addEventListener('click', () => {
 		if (state.keyInputMode === 'file') return;
 		state.keyInputMode = 'file';
@@ -656,7 +574,6 @@ function setupApp() {
 		render();
 	});
 
-	// Hex input
 	$('kf-hex-input').addEventListener('input', e => {
 		state.keyHexInput = e.target.value;
 		const result = parseKeyHex(state.keyHexInput);
@@ -670,11 +587,10 @@ function setupApp() {
 			state.keyfileData = { name: 'hex key', bytes: result.bytes };
 			state.keyHexError = '';
 		}
-		if (state.status !== 'idle') { state.status = 'idle'; state.outputBlob = null; }
+		if (state.status !== 'idle') clearOutput();
 		render();
 	});
 
-	// Clear hex
 	$('btn-clear-hex').addEventListener('click', () => {
 		state.keyHexInput  = '';
 		state.keyHexError  = '';
@@ -684,10 +600,10 @@ function setupApp() {
 		render();
 	});
 
-	// Generate key — 64 random bytes (512-bit)
+	// Generate key: 32 random bytes (256-bit), matches CLI keyfile size
 	$('btn-gen').addEventListener('click', () => {
 		try {
-			state.keygenBytes = randomBytes(64);
+			state.keygenBytes = generateKey();
 			$('key-hex').value = bytesToHex(state.keygenBytes);
 			$('gen-output').classList.remove('hidden');
 			render();
@@ -703,7 +619,6 @@ function setupApp() {
 		if (state.keygenBytes) downloadBytes(state.keygenBytes, 'leviathan.key');
 	});
 
-	// Action button
 	$('action-btn').addEventListener('click', () => {
 		state.mode === 'encrypt' ? doEncrypt() : doDecrypt();
 	});
@@ -711,7 +626,6 @@ function setupApp() {
 	render();
 }
 
-// Initialise on DOM ready
 if (document.readyState === 'loading') {
 	document.addEventListener('DOMContentLoaded', setupApp);
 } else {

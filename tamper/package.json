@@ -1,0 +1,30 @@
+{
+  "name": "lvthn-tamper",
+  "version": "2.1.0",
+  "author": "xero (https://x-e.ro)",
+  "license": "MIT",
+  "description": "Leviathan crypto attack-resilience demo",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xero/leviathan-demos.git",
+    "directory": "tamper"
+  },
+  "scripts": {
+    "build": "bun run build.ts",
+    "lint": "bunx eslint .",
+    "lint:fix": "bunx eslint . --fix",
+    "testsetup": "bunx playwright install chromium",
+    "test": "bunx playwright test",
+    "_shorthand": "# bake=build  check=test  fix=lint:fix",
+    "bake": "bun run build",
+    "check": "bun run test",
+    "fix": "bun run lint:fix"
+  },
+  "homepage": "https://leviathan.3xi.club",
+  "dependencies": {
+    "leviathan-crypto": "3.0.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.1"
+  }
+}

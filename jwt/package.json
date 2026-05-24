@@ -1,0 +1,36 @@
+{
+  "name": "leviathan-jwt-demo",
+  "version": "2.1.0",
+  "author": "xero (https://x-e.ro)",
+  "license": "MIT",
+  "description": "Leviathan crypto library JWT signing demo for classical and post-quantum JSON Web Tokens",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xero/leviathan-demos.git",
+    "directory": "jwt"
+  },
+  "homepage": "https://leviathan.3xi.club",
+  "scripts": {
+    "build": "bun run build.ts",
+    "lint": "bunx eslint .",
+    "lint:fix": "bunx eslint . --fix",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "_shorthand": "# bake=build  check=test  fix=lint:fix",
+    "bake": "bun run build",
+    "check": "bun run test",
+    "fix": "bun run lint:fix"
+  },
+  "dependencies": {
+    "leviathan-crypto": "3.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "bun-types": "1.3.11",
+    "@types/node": "^25.6.0",
+    "eslint": "^10.3.0",
+    "jiti": "^2.6.1",
+    "typescript-eslint": "^8.59.1"
+  }
+}
