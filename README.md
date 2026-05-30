@@ -1,22 +1,16 @@
 # Leviathan Crypto Library Demos
 
-# https://leviathan.3xi.club
+# https://leviathan.3xi.club/demos
 
 <img src="https://github.com/xero/leviathan-crypto/raw/main/docs/logo.svg" alt="Leviathan logo" width="400" >
 
-> [!NOTE]
 > This repo contains demo applications and reference implementations built
-> using [leviathan-crypto](https://github.com/xero/leviathan-crypto), a
+> using **[leviathan-crypto](https://github.com/xero/leviathan-crypto)**, a
 > zero-dependency WebAssembly cryptography library for TypeScript that's
 > tree-shakeable, side-effect free, with vector verified primitives.
->
-> Each project in this repository is a working application that can be used
-> directly or read as an implementation reference.
 
 > [!NOTE]
-> Each demo's wire format tracks the matching version of leviathan-crypto.
-> A demo's release version always corresponds to the leviathan-crypto release
-> it was built against.
+> These demos are released in tandem with leviathan-crypto. Wire formats conform to the latest version of the library. [![GitHub Release](https://img.shields.io/github/v/release/xero/leviathan-crypto?sort=semver&display_name=tag&style=flat&logo=github&logoColor=989da4&label=latest%20release&labelColor=161925&color=1c7293)](https://github.com/xero/leviathan-crypto/releases/latest)
 
 ## Projects
 
@@ -30,7 +24,8 @@ selectable via the `--cipher` flag. A single keyfile is compatible with all
 three ciphers; the header byte determines decryption automatically. Encryption
 and decryption distribute 64KB chunks across a worker pool sized to
 `hardwareConcurrency`. Each worker owns an isolated WASM instance with no
-shared memory between workers.
+shared memory between workers. The tool can export its own interactive
+completions for a variety of shells.
 
 ```sh
 bun add -g lvthn # or npm install -g lvthn
@@ -110,7 +105,7 @@ dependency.
 
 > [!TIP]
 > This is a teaching demo. For a real, production-ready secure messenger built
-> on the same library, see [covcom](https://github.com/xero/covcom).
+> on the same library, see **[COVCOM](https://github.com/xero/covcom)**.
 
 ```sh
 cd tamper && bun install && bun bake
