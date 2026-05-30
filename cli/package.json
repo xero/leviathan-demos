@@ -1,6 +1,6 @@
 {
   "name": "lvthn",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "description": "Command-line file encryption with paranoid-grade ciphers. Serpent-256-CBC and XChaCha20-Poly1305, WASM-SIMD accelerated, powered by leviathan-crypto.",
   "license": "MIT",
   "repository": {
